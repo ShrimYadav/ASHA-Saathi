@@ -1,0 +1,1990 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Home,
+  Users,
+  ClipboardList,
+  GitPullRequest,
+  BarChart3,
+  Mail,
+  Settings,
+  Bell,
+  ChevronRight,
+  Wifi,
+  WifiOff,
+  Search,
+  Plus,
+  AlertTriangle,
+  Clock,
+  CheckCircle2,
+  FileText,
+  MessageSquare,
+  ShieldAlert,
+  X,
+  Sparkles,
+  ArrowRight,
+  UserCheck,
+  RefreshCw,
+  QrCode,
+  Download,
+  Mic,
+  MicOff,
+  AlertOctagon,
+  FileCheck2,
+  Stethoscope,
+  Building2,
+  Edit2,
+  Check,
+  Loader2,
+  Share2,
+  Globe,
+  Database,
+  Send,
+} from 'lucide-react';
+import { AshaLogo } from '../brand/AshaLogo';
+import {
+  CURRENT_USER,
+  MOCK_PATIENTS,
+  MOCK_ACTIVITIES,
+  ASSETS,
+} from '../../data/mockData';
+import { Patient, DialectOption } from '../../types';
+import { api } from '../../services/api';
+import { offlineStorage } from '../../services/indexedDB';
+import { SpeechHandler } from '../../services/speechRecognition';
+
+interface DesktopDashboardProps {
+  className?: string;
+  isCompact?: boolean;
+  onOpenMobileScreen?: (screenId: string) => void;
+}
+
+export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
+  className = '',
+  isCompact = false,
+  onOpenMobileScreen,
+}) => {
+  // Navigation
+  const [activeNav, setActiveNav] = useState('Home');
+  const [offlineMode, setOfflineMode] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationsRead, setNotificationsRead] = useState(false);
+
+  // Live Backend State
+  const [dashboardData, setDashboardData] = useState<any>({
+    householdsToday: 12,
+    pendingReferrals: 3,
+    completedVisits: 8,
+    highPriorityCases: 2,
+    totalHouseholds: 148,
+    todayVisitList: MOCK_PATIENTS.slice(0, 4),
+    recentActivity: MOCK_ACTIVITIES,
+  });
+
+  const [householdsList, setHouseholdsList] = useState<any[]>([]);
+  const [referralsList, setReferralsList] = useState<any[]>([]);
+  const [reportsData, setReportsData] = useState<any | null>(null);
+  const [visitsList, setVisitsList] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Modals inside project window (NO phone demo)
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [showRiskModal, setShowRiskModal] = useState(false);
+  const [selectedRiskPatient, setSelectedRiskPatient] = useState<any | null>(null);
+  const [showPassportModal, setShowPassportModal] = useState(false);
+  const [activePassport, setActivePassport] = useState<any | null>(null);
+  const [showScannerModal, setShowScannerModal] = useState(false);
+  const [showPatientDetailModal, setShowPatientDetailModal] = useState<Patient | null>(null);
+
+  // Voice Visit Recording State
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceSeconds, setVoiceSeconds] = useState(0);
+  const [transcript, setTranscript] = useState('');
+  const [speechLanguage, setSpeechLanguage] = useState<DialectOption>('Hindi (हिन्दी)');
+  const speechHandlerRef = useRef<SpeechHandler | null>(null);
+
+  // AI Extraction State
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractedData, setExtractedData] = useState<any | null>(null);
+  const [isEditingExtracted, setIsEditingExtracted] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  // Health Centre Desk State
+  const [scanInputToken, setScanInputToken] = useState('ASHA20261010-0042');
+  const [verifiedDeskReferral, setVerifiedDeskReferral] = useState<any | null>(null);
+  const [deskActionMsg, setDeskActionMsg] = useState<string | null>(null);
+  const [isDeskLoading, setIsDeskLoading] = useState(false);
+
+  // Settings / Offline State
+  const [storageStats, setStorageStats] = useState({
+    draftsCount: 0,
+    queueCount: 0,
+    sizeFormatted: '12.0 MB used',
+  });
+  const [selectedDialect, setSelectedDialect] = useState<string>('Hindi (हिन्दी)');
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
+
+  // Load backend data
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const d = await api.getDashboard();
+      setDashboardData(d);
+      const hh = await api.getHouseholds();
+      setHouseholdsList(hh.households);
+      const ref = await api.getReferrals();
+      setReferralsList(ref.referrals);
+      if (ref.referrals && ref.referrals.length > 0) {
+        setActivePassport(ref.referrals[0]);
+      }
+      const vis = await api.getVisits();
+      setVisitsList(vis.visits);
+      const rep = await api.getReports();
+      setReportsData(rep.analytics);
+    } catch (err) {
+      console.warn('Dashboard api query fallback to seeds:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+    offlineStorage.getEstimatedStorage().then((s) => {
+      setStorageStats({
+        draftsCount: s.draftsCount,
+        queueCount: s.queueCount,
+        sizeFormatted: `${s.sizeFormatted} used`,
+      });
+    });
+  }, []);
+
+  // Voice Speech Recognition Setup
+  useEffect(() => {
+    speechHandlerRef.current = new SpeechHandler({
+      language: speechLanguage.includes('Hindi') ? 'hi-IN' : 'en-IN',
+      onInterimResult: (interim) => {
+        setTranscript((prev) => prev.split(' [')[0] + ' ' + interim);
+      },
+      onFinalResult: (final) => {
+        setTranscript((prev) => (prev ? prev + ' ' : '') + final);
+      },
+      onEnd: () => setIsRecording(false),
+    });
+
+    return () => {
+      speechHandlerRef.current?.stop();
+    };
+  }, [speechLanguage]);
+
+  useEffect(() => {
+    let t: NodeJS.Timeout;
+    if (isRecording) {
+      t = setInterval(() => setVoiceSeconds((s) => s + 1), 1000);
+    }
+    return () => clearInterval(t);
+  }, [isRecording]);
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      speechHandlerRef.current?.stop();
+      setIsRecording(false);
+    } else {
+      speechHandlerRef.current?.start();
+      setIsRecording(true);
+    }
+  };
+
+  const handleProcessAI = async () => {
+    const text = transcript.trim() || 'कमल सिंह को दो हफ्ते से ज्यादा से खांसी और रात में पसीना आ रहा है। वजन घटा है।';
+    setIsExtracting(true);
+    try {
+      const res = await api.extractVisitFromTranscript(text);
+      if (res.extracted) {
+        setExtractedData(res.extracted);
+      }
+    } catch (err) {
+      console.warn('AI extraction fallback:', err);
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleConfirmSaveVisit = async () => {
+    if (!extractedData) return;
+    setIsExtracting(true);
+    try {
+      const isTb = extractedData.condition?.toLowerCase().includes('tb') ||
+        (extractedData.symptoms && extractedData.symptoms.some((s: string) => s.toLowerCase().includes('cough')));
+
+      const res = await api.createVisit({
+        personId: isTb ? 'P03' : 'P01',
+        personName: extractedData.personName,
+        condition: extractedData.condition,
+        symptoms: Array.isArray(extractedData.symptoms) ? extractedData.symptoms : [extractedData.symptoms],
+        notes: extractedData.notes || `Frontline visit recorded. Follow-up: ${extractedData.followUp}`,
+      });
+
+      setSaveSuccessMsg('Visit record successfully committed to health registry!');
+      await loadData();
+
+      setTimeout(() => {
+        setSaveSuccessMsg(null);
+        setShowVoiceModal(false);
+        setExtractedData(null);
+        setTranscript('');
+
+        // If TB suspect was identified, prompt the risk alert & protocol
+        if (isTb) {
+          setSelectedRiskPatient({
+            name: extractedData.personName,
+            condition: 'TB Suspect',
+            symptoms: extractedData.symptoms,
+          });
+          setShowRiskModal(true);
+        }
+      }, 1000);
+    } catch (e: any) {
+      console.error('Failed to commit visit:', e);
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleIssueReferral = async () => {
+    try {
+      const res = await api.createReferral({
+        personId: 'P03',
+        personName: 'Kamal Singh',
+        personAge: 42,
+        personGender: 'Male',
+        householdId: 'HH-03',
+        referredToFacility: 'District Hospital Pipra',
+        reason: 'Presumptive Pulmonary TB (Persistent cough > 2 weeks, night sweats)',
+        protocolCode: 'NTEP-TB-RULE-01',
+        urgency: 'HIGH_PRIORITY',
+      });
+      setActivePassport(res.referral);
+      setShowRiskModal(false);
+      setShowPassportModal(true);
+      await loadData();
+    } catch (e) {
+      console.error('Failed to issue referral:', e);
+    }
+  };
+
+  const handleDeskValidation = async (code: string) => {
+    setIsDeskLoading(true);
+    setDeskActionMsg(null);
+    try {
+      const res = await api.validateReferralToken(code);
+      if (res.success && res.referral) {
+        setVerifiedDeskReferral(res.referral);
+      }
+    } catch (e: any) {
+      setDeskActionMsg(e.message || 'Token not found');
+    } finally {
+      setIsDeskLoading(false);
+    }
+  };
+
+  const handleDeskRecordEvent = async (type: 'REACHED' | 'CONSULTED') => {
+    if (!verifiedDeskReferral) return;
+    setIsDeskLoading(true);
+    try {
+      const res = await api.recordReferralEvent({
+        referralId: verifiedDeskReferral.id,
+        eventType: type,
+        facilityName: 'District Hospital Pipra',
+        recordedBy: 'Dr. A. K. Verma (Chest Clinic)',
+        notes: type === 'REACHED' ? 'Patient checked into reception' : 'Clinical examination completed; Sputum CBNAAT sample collected.',
+      });
+      setVerifiedDeskReferral(res.referral);
+      setDeskActionMsg(`✓ Event recorded: ${type}`);
+      await loadData();
+    } catch (e: any) {
+      setDeskActionMsg(e.message || 'Could not record event');
+    } finally {
+      setIsDeskLoading(false);
+    }
+  };
+
+  const handleManualSync = async () => {
+    setIsLoading(true);
+    try {
+      const drafts = await offlineStorage.getDraftVisits();
+      const res = await api.syncOfflineBatch(drafts, []);
+      setSyncFeedback(`Successfully synchronized ${res.syncedVisits} draft(s) with cloud server!`);
+      await offlineStorage.clearSyncQueue();
+      await loadData();
+    } catch (e) {
+      setSyncFeedback('Device offline: All drafts preserved safely in local IndexedDB storage.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const navItems = [
+    { name: 'Home', icon: Home },
+    { name: 'Households', icon: Users, count: `${dashboardData.totalHouseholds || 148}` },
+    { name: 'Visit Records', icon: ClipboardList, count: `${visitsList.length || 8}` },
+    { name: 'Priority Cases', icon: AlertTriangle, count: `${dashboardData.highPriorityCases || 2}` },
+    { name: 'Referrals', icon: GitPullRequest, count: `${referralsList.length || 3}` },
+    { name: 'Facility Desk', icon: Building2 },
+    { name: 'Reports', icon: BarChart3 },
+    { name: 'Messages', icon: Mail, count: '2' },
+    { name: 'Settings', icon: Settings },
+  ];
+
+  return (
+    <div
+      className={`bg-slate-50 text-slate-800 flex overflow-hidden ${
+        isCompact ? 'h-[760px] rounded-3xl border border-slate-200/90 shadow-2xl' : 'min-h-screen w-full'
+      } ${className}`}
+    >
+      {/* ========================================== */}
+      {/* LEFT SIDEBAR (Dark Forest Green) */}
+      {/* ========================================== */}
+      <aside className="w-64 shrink-0 bg-[#064e3b] text-white flex flex-col justify-between p-5 select-none relative z-10">
+        <div>
+          {/* Brand Logo */}
+          <div className="pb-6 pt-1 border-b border-white/10">
+            <AshaLogo variant="light" size="md" />
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="mt-6 space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.name;
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => setActiveNav(item.name)}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    isActive
+                      ? 'bg-[#0f5c43] text-white shadow-sm ring-1 ring-white/10'
+                      : 'text-emerald-100/80 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      className={`w-4 h-4 ${
+                        isActive ? 'text-emerald-300' : 'text-emerald-300/70'
+                      }`}
+                    />
+                    <span>{item.name}</span>
+                  </div>
+                  {item.count && (
+                    <span
+                      className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${
+                        isActive
+                          ? 'bg-emerald-400/20 text-emerald-200'
+                          : 'bg-white/10 text-emerald-100'
+                      }`}
+                    >
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* User Profile Card at Bottom */}
+        <div className="pt-4 border-t border-white/10">
+          <button
+            onClick={() => setActiveNav('Settings')}
+            className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-white/5 transition-colors group text-left"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative shrink-0">
+                <img
+                  src={CURRENT_USER.avatar}
+                  alt={CURRENT_USER.name}
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-400/40"
+                />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#064e3b] rounded-full" />
+              </div>
+              <div className="truncate">
+                <p className="text-sm font-semibold text-white leading-tight truncate">
+                  {CURRENT_USER.name}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[11px] text-emerald-300/80 leading-none">
+                    {CURRENT_USER.role}
+                  </span>
+                  <span className="inline-flex items-center text-[10px] text-emerald-300 font-medium">
+                    <span className="w-1 h-1 rounded-full bg-emerald-400 mr-1" />
+                    Online
+                  </span>
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-emerald-300/50 group-hover:text-white transition-colors shrink-0" />
+          </button>
+        </div>
+      </aside>
+
+      {/* ========================================== */}
+      {/* MAIN PROJECT WINDOW CONTENT AREA */}
+      {/* ========================================== */}
+      <main className="flex-1 flex flex-col bg-[#f4f7f6] overflow-y-auto overflow-x-hidden relative">
+        {/* Top Header Bar */}
+        <header className="px-8 py-5 bg-white/90 backdrop-blur-md sticky top-0 z-20 border-b border-slate-200/80 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                Good Morning, Sunita!
+              </h1>
+              <span className="text-xl">🌱</span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Pipra Sub-Centre • Gorakhpur • Frontline Health Companion
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Action: Quick Voice Visit Button */}
+            <button
+              onClick={() => {
+                setExtractedData(null);
+                setTranscript('');
+                setShowVoiceModal(true);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Record Voice Visit</span>
+            </button>
+
+            {/* Offline Mode Switch */}
+            <button
+              onClick={() => setOfflineMode(!offlineMode)}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                offlineMode
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-2 ring-emerald-400/20'
+                  : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:bg-slate-50'
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  offlineMode ? 'bg-emerald-600 animate-pulse' : 'bg-emerald-500'
+                }`}
+              />
+              <span>Offline Mode</span>
+              {offlineMode ? (
+                <WifiOff className="w-3.5 h-3.5 text-emerald-700 ml-0.5" />
+              ) : (
+                <Wifi className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+              )}
+            </button>
+
+            {/* Refresh */}
+            <button
+              onClick={loadData}
+              className="p-2 rounded-full text-slate-500 hover:text-emerald-700 hover:bg-slate-100 transition-colors"
+              title="Refresh Data"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+
+            {/* Notification Bell */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  setNotificationsRead(true);
+                }}
+                className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-emerald-700 hover:border-emerald-300 transition-colors shadow-xs relative"
+                aria-label="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {!notificationsRead && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
+                )}
+              </button>
+
+              {/* Popover */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <span className="text-xs font-bold text-slate-900">
+                      Notifications (2 New)
+                    </span>
+                    <button
+                      onClick={() => setShowNotifications(false)}
+                      className="text-slate-400 hover:text-slate-600 text-xs"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-2.5 mt-3 text-xs">
+                    <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/60 text-slate-800">
+                      <p className="font-semibold text-amber-900">
+                        TB Protocol Alert (NTEP-TB-01)
+                      </p>
+                      <p className="text-slate-600 mt-0.5">
+                        Kamal Singh presumptive TB active. Direct referral recommended.
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/60 text-slate-800">
+                      <p className="font-semibold text-emerald-900">
+                        ANC Follow-Up (MOHFW-ANC-02)
+                      </p>
+                      <p className="text-slate-600 mt-0.5">
+                        Radhika Sharma scheduled for trimester routine checkup.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Offline storage banner if offlineMode */}
+        {offlineMode && (
+          <div className="bg-emerald-700 text-white px-8 py-2.5 text-xs flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <WifiOff className="w-4 h-4" />
+              <span>
+                <strong>Offline-First Mode Active:</strong> All changes &amp; voice summaries are safely preserved in browser IndexedDB and automatically synchronized when connectivity returns.
+              </span>
+            </div>
+            <button
+              onClick={() => setActiveNav('Settings')}
+              className="underline text-[11px] font-semibold hover:text-emerald-100"
+            >
+              Inspect Queue
+            </button>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VIEW 1: HOME DASHBOARD */}
+        {/* ============================================================== */}
+        {activeNav === 'Home' && (
+          <div className="p-8 space-y-7">
+            {/* 4 STAT CARDS ROW */}
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* 1. Households Today */}
+              <div
+                onClick={() => setActiveNav('Households')}
+                className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-2xl font-extrabold text-slate-900 tracking-tight leading-none">
+                    {dashboardData.householdsToday}
+                  </p>
+                  <p className="text-xs font-medium text-slate-500 mt-1">
+                    Households Today
+                  </p>
+                </div>
+              </div>
+
+              {/* 2. Referrals Pending */}
+              <div
+                onClick={() => setActiveNav('Referrals')}
+                className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-2xl font-extrabold text-slate-900 tracking-tight leading-none">
+                    {dashboardData.pendingReferrals}
+                  </p>
+                  <p className="text-xs font-medium text-slate-500 mt-1">
+                    Referrals Pending
+                  </p>
+                </div>
+              </div>
+
+              {/* 3. Completed Visits */}
+              <div
+                onClick={() => setActiveNav('Visit Records')}
+                className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-2xl font-extrabold text-slate-900 tracking-tight leading-none">
+                    {dashboardData.completedVisits}
+                  </p>
+                  <p className="text-xs font-medium text-slate-500 mt-1">
+                    Completed Visits
+                  </p>
+                </div>
+              </div>
+
+              {/* 4. High Priority Cases */}
+              <div
+                onClick={() => setActiveNav('Priority Cases')}
+                className="bg-white rounded-2xl p-5 border border-rose-100 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow bg-linear-to-br from-white to-rose-50/30 cursor-pointer"
+              >
+                <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-2xl font-extrabold text-rose-600 tracking-tight leading-none">
+                    {dashboardData.highPriorityCases}
+                  </p>
+                  <p className="text-xs font-medium text-slate-500 mt-1">
+                    High Priority Cases
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* LOWER SECTION: Two Columns */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-7">
+              {/* LEFT COLUMN: Today's Visit List (7 cols) */}
+              <div className="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                    <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                      Today&apos;s Visit List
+                    </h2>
+                    <button
+                      onClick={() => setActiveNav('Households')}
+                      className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
+                    >
+                      View All
+                    </button>
+                  </div>
+
+                  <div className="divide-y divide-slate-100 mt-2">
+                    {dashboardData.todayVisitList.map((patient: any) => {
+                      const isHigh = patient.statusTag === 'High Priority';
+                      const isFollow = patient.statusTag === 'Follow Up';
+                      return (
+                        <div
+                          key={patient.id}
+                          onClick={() => {
+                            if (patient.id === 'P03') {
+                              setSelectedRiskPatient(patient);
+                              setShowRiskModal(true);
+                            } else {
+                              setShowPatientDetailModal(patient);
+                            }
+                          }}
+                          className="py-3.5 px-2 flex items-center justify-between rounded-xl hover:bg-slate-50/90 transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <img
+                              src={
+                                patient.name.includes('Kamal')
+                                  ? ASSETS.kamalSingh
+                                  : ASSETS.radhikaSharma
+                              }
+                              alt={patient.name}
+                              className="w-10 h-10 rounded-full object-cover shrink-0 ring-1 ring-slate-200"
+                            />
+                            <div className="min-w-0">
+                              <h3 className="text-sm font-semibold text-slate-900 group-hover:text-emerald-800 transition-colors truncate">
+                                {patient.name}
+                              </h3>
+                              <p className="text-xs text-slate-500 truncate mt-0.5">
+                                {patient.condition}
+                                <span className="mx-1 text-slate-300">•</span>
+                                {patient.lastVisit || '2 months ago'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span
+                              className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                                isHigh
+                                  ? 'bg-rose-50 text-rose-600 border border-rose-200/60'
+                                  : isFollow
+                                  ? 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                              }`}
+                            >
+                              {patient.statusTag}
+                            </span>
+                            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-700 transition-colors" />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Action bar at bottom of list */}
+                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                  <span>Showing {dashboardData.todayVisitList.length} of 12 scheduled visits</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setExtractedData(null);
+                        setTranscript('');
+                        setShowVoiceModal(true);
+                      }}
+                      className="px-3.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold transition-colors flex items-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      Record Voice Visit
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: Recent Activity + Banner Card (5 cols) */}
+              <div className="lg:col-span-5 flex flex-col gap-6">
+                {/* Recent Activity Card */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+                  <h2 className="text-base font-bold text-slate-900 tracking-tight pb-3 border-b border-slate-100">
+                    Recent Activity
+                  </h2>
+                  <div className="mt-3.5 space-y-4">
+                    {dashboardData.recentActivity.map((act: any) => (
+                      <div
+                        key={act.id}
+                        onClick={() => {
+                          if (act.type === 'referral') {
+                            setActiveNav('Referrals');
+                          } else {
+                            setActiveNav('Visit Records');
+                          }
+                        }}
+                        className="flex items-start gap-3 cursor-pointer group"
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                            act.type === 'visit'
+                              ? 'bg-emerald-50 text-emerald-600'
+                              : act.type === 'referral'
+                              ? 'bg-purple-50 text-purple-600'
+                              : act.type === 'followup'
+                              ? 'bg-amber-50 text-amber-600'
+                              : 'bg-blue-50 text-blue-600'
+                          }`}
+                        >
+                          {act.type === 'visit' && <FileText className="w-4 h-4" />}
+                          {act.type === 'referral' && <GitPullRequest className="w-4 h-4" />}
+                          {act.type === 'followup' && <CheckCircle2 className="w-4 h-4" />}
+                          {act.type === 'message' && <MessageSquare className="w-4 h-4" />}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
+                            {act.title}
+                          </p>
+                          <p className="text-[11px] text-slate-500 mt-0.5">
+                            {act.subtitle}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Photo Card: "Better care starts with you 🌱" */}
+                <div className="relative rounded-2xl overflow-hidden min-h-[170px] flex-1 group shadow-xs border border-slate-200">
+                  <img
+                    src={ASSETS.villageWorker}
+                    alt="Rural healthcare worker"
+                    className="w-full h-full object-cover object-center absolute inset-0 transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-black/40" />
+
+                  <div className="relative z-10 p-5 h-full flex flex-col justify-between text-white">
+                    <div>
+                      <h3 className="text-lg font-bold tracking-tight drop-shadow-sm flex items-center gap-1.5">
+                        Better care starts with you 🌱
+                      </h3>
+                      <p className="text-xs text-white/90 mt-1 max-w-[240px] drop-shadow-xs font-medium">
+                        AI assistance in your voice, your language, right in every home.
+                      </p>
+                    </div>
+
+                    <div className="pt-2">
+                      <button
+                        onClick={() => {
+                          setExtractedData(null);
+                          setTranscript('');
+                          setShowVoiceModal(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-3.5 py-2 rounded-lg shadow-sm transition-all"
+                      >
+                        <span>Start Visit</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VIEW 2: HOUSEHOLDS DIRECTORY */}
+        {/* ============================================================== */}
+        {activeNav === 'Households' && (
+          <div className="p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Household Directory &amp; Beneficiaries
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Village Pipra • 5 Sections • 148 Registered Families
+                </p>
+              </div>
+
+              <div className="w-72 relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search head name or code..."
+                  className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 focus:outline-hidden focus:border-emerald-600"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {householdsList
+                .filter(
+                  (h) =>
+                    !searchQuery ||
+                    h.headName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    h.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    h.tola.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((hh) => (
+                  <div
+                    key={hh.id}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-emerald-300 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                      <span className="text-sm font-bold text-slate-900 group-hover:text-emerald-700">
+                        {hh.headName}
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold">
+                        {hh.code}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 py-3 text-xs text-slate-600">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Tola Section:</span>
+                        <span className="font-medium text-slate-800">{hh.tola}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Family Members:</span>
+                        <span className="font-medium text-slate-800">{hh.familyMembersCount} Members</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Ration Scheme:</span>
+                        <span className="font-semibold text-emerald-800">{hh.rationCardType}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex justify-between items-center text-xs">
+                      <span className="text-[11px] text-slate-400">
+                        Last visited: {hh.lastVisitDate}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setTranscript(`विजिट: ${hh.headName} के घर की जाँच।`);
+                          setShowVoiceModal(true);
+                        }}
+                        className="text-xs font-bold text-emerald-700 group-hover:underline flex items-center gap-1"
+                      >
+                        <span>Record Visit</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VIEW 3: VISIT RECORDS */}
+        {/* ============================================================== */}
+        {activeNav === 'Visit Records' && (
+          <div className="p-8 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Recorded Health Visits &amp; Clinical Notes
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Voice-to-structured records verified and confirmed by ASHA worker
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setExtractedData(null);
+                  setTranscript('');
+                  setShowVoiceModal(true);
+                }}
+                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>New Voice Visit</span>
+              </button>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+                  <tr>
+                    <th className="py-3 px-4">Beneficiary</th>
+                    <th className="py-3 px-4">Date &amp; Time</th>
+                    <th className="py-3 px-4">Condition / Diagnosis</th>
+                    <th className="py-3 px-4">Symptoms / Observations</th>
+                    <th className="py-3 px-4">Status &amp; Protocol</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {visitsList.map((vis) => (
+                    <tr key={vis.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3.5 px-4 font-bold text-slate-900">
+                        {vis.personName}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                        {vis.date} • {vis.time}
+                      </td>
+                      <td className="py-3.5 px-4 font-medium">
+                        {vis.condition}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate">
+                        {Array.isArray(vis.symptoms) ? vis.symptoms.join(', ') : vis.symptoms}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            vis.priorityLevel === 'HIGH_PRIORITY'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}
+                        >
+                          {vis.priorityLevel || 'ROUTINE'}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => {
+                            if (vis.personName.includes('Kamal')) {
+                              setSelectedRiskPatient(vis);
+                              setShowRiskModal(true);
+                            }
+                          }}
+                          className="text-emerald-700 hover:underline font-semibold"
+                        >
+                          View Protocol
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VIEW 4: PRIORITY CASES & PROTOCOL RULES */}
+        {/* ============================================================== */}
+        {activeNav === 'Priority Cases' && (
+          <div className="p-8 space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Active Priority Flags &amp; Clinical Protocols
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Deterministic rules evaluation — transparent clinical guidelines without unvetted AI decisions
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Card 1: TB Suspect Kamal Singh */}
+              <div className="bg-white rounded-2xl p-6 border border-rose-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-rose-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0">
+                      <AlertOctagon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-rose-950">
+                        High Priority Flag: Presumptive TB
+                      </h3>
+                      <span className="text-[10px] font-mono font-bold text-rose-700">
+                        Rule: NTEP-TB-RULE-01
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
+                    URGENT
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs text-slate-700">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Beneficiary:</span>
+                    <span className="font-bold text-slate-900">Kamal Singh (Age 42 | Male)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Source Guideline:</span>
+                    <span className="text-right">MoHFW National TB Elimination Programme</span>
+                  </div>
+                  <div className="p-3 bg-rose-50/60 rounded-xl space-y-1 text-[11px] text-rose-900">
+                    <span className="font-bold block">Matched Symptoms:</span>
+                    <p>• Persistent cough (&gt;2 weeks)</p>
+                    <p>• Unexplained weight loss</p>
+                    <p>• Night sweats</p>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setSelectedRiskPatient({ name: 'Kamal Singh', condition: 'TB Suspect' });
+                      setShowRiskModal(true);
+                    }}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold transition-colors"
+                  >
+                    View Protocol &amp; Issue Referral
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 2: Gestational Anemia */}
+              <div className="bg-white rounded-2xl p-6 border border-amber-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-amber-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0">
+                      <AlertTriangle className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-amber-950">
+                        Attention Flag: Gestational Anemia
+                      </h3>
+                      <span className="text-[10px] font-mono font-bold text-amber-700">
+                        Rule: MOHFW-ANC-ANEMIA-02
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                    FOLLOW-UP
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs text-slate-700">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Beneficiary:</span>
+                    <span className="font-bold text-slate-900">Savita Sharma (Age 26 | Pregnant)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Source Guideline:</span>
+                    <span className="text-right">Anemia Mukt Bharat Operational Guide</span>
+                  </div>
+                  <div className="p-3 bg-amber-50/60 rounded-xl space-y-1 text-[11px] text-amber-900">
+                    <span className="font-bold block">Matched Symptoms:</span>
+                    <p>• Mild headache, fatigue &amp; pallor</p>
+                    <p>• Borderline Hemoglobin (9.8 g/dL)</p>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setExtractedData({
+                        personName: 'Savita Sharma',
+                        age: '26 years',
+                        condition: 'Pregnant (2nd Trimester)',
+                        symptoms: ['Mild headache', 'Fatigue', 'Pallor'],
+                        visitDate: '10 Oct 2026',
+                        followUp: 'ANC checkup in 2 weeks & double IFA supply',
+                      });
+                      setShowVoiceModal(true);
+                    }}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors"
+                  >
+                    ANC Follow-Up &amp; IFA Prescribe
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VIEW 5: REFERRAL PASSPORTS & TRACKING */}
+        {/* ============================================================== */}
+        {activeNav === 'Referrals' && (
+          <div className="p-8 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Referral Passports &amp; Facility Coordination
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Secure cryptographic QR tokens • District Hospital Pipra &amp; PHC OPDs
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowScannerModal(true)}
+                  className="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-colors"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span>Open Facility Desk Scanner</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {referralsList.map((ref) => (
+                <div
+                  key={ref.id}
+                  className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center shrink-0 border border-purple-100">
+                      <QrCode className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-bold text-slate-900">
+                          {ref.personName}
+                        </h3>
+                        <span className="text-[11px] font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                          {ref.referralCode}
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                          {ref.urgency}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-1">
+                        <strong>Reason:</strong> {ref.reason}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Destination: {ref.referredToFacility} • Protocol: {ref.protocolCode} • Issued: {ref.date}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-emerald-700 block">
+                        Status: {ref.status}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        {ref.events?.length || 1} Event(s) logged
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setActivePassport(ref);
+                        setShowPassportModal(true);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-[#064e3b] hover:bg-[#043927] text-white text-xs font-bold transition-colors"
+                    >
+                      View QR Passport
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VIEW 6: FACILITY HEALTH CENTRE DESK */}
+        {/* ============================================================== */}
+        {activeNav === 'Facility Desk' && (
+          <div className="p-8 space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Health Centre Reception &amp; OPD Desk
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Authorized desk interface to authenticate QR tokens and record arrival &amp; clinical consultations
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs max-w-2xl space-y-4">
+              <h3 className="text-sm font-bold text-slate-900">
+                Validate Patient Referral Token
+              </h3>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={scanInputToken}
+                  onChange={(e) => setScanInputToken(e.target.value)}
+                  placeholder="Enter or scan referral token / code..."
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-mono focus:outline-hidden focus:border-emerald-600 font-medium"
+                />
+                <button
+                  onClick={() => handleDeskValidation(scanInputToken)}
+                  disabled={isDeskLoading}
+                  className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition-colors"
+                >
+                  {isDeskLoading ? 'Checking...' : 'Validate'}
+                </button>
+              </div>
+
+              {deskActionMsg && (
+                <p className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl font-medium">
+                  {deskActionMsg}
+                </p>
+              )}
+
+              {verifiedDeskReferral && (
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 mt-4 text-xs">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                    <span className="font-bold text-slate-900 text-sm">
+                      {verifiedDeskReferral.personName} ({verifiedDeskReferral.personAge} M)
+                    </span>
+                    <span className="font-mono text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">
+                      {verifiedDeskReferral.referralCode}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1 text-slate-600">
+                    <p><strong>Clinical Reason:</strong> {verifiedDeskReferral.reason}</p>
+                    <p><strong>Protocol:</strong> {verifiedDeskReferral.protocolCode}</p>
+                    <p><strong>Current Status:</strong> <span className="text-emerald-700 font-bold">{verifiedDeskReferral.status}</span></p>
+                  </div>
+
+                  <div className="pt-2 flex gap-2">
+                    <button
+                      onClick={() => handleDeskRecordEvent('REACHED')}
+                      className="flex-1 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      <span>Record Patient Arrival</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDeskRecordEvent('CONSULTED')}
+                      className="flex-1 py-2.5 px-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Stethoscope className="w-4 h-4" />
+                      <span>Record Doctor Consultation</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VIEW 7: REPORTS & ANALYTICS */}
+        {/* ============================================================== */}
+        {activeNav === 'Reports' && (
+          <div className="p-8 space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Village Coverage &amp; Referral Resolution Reports
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Frontline indicators derived from recorded visits and facility event logs
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-500 mb-2">
+                  REFERRAL RESOLUTION FUNNEL
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span>Passports Issued</span>
+                      <span>100%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div className="w-full h-full bg-emerald-600 rounded-full" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span>Reached Health Centre</span>
+                      <span>100%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div className="w-full h-full bg-blue-600 rounded-full" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span>Consultation Completed</span>
+                      <span>100%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div className="w-full h-full bg-purple-600 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-500 mb-2">
+                  CLINICAL PROTOCOL ADHERENCE
+                </h3>
+                <div className="flex flex-col items-center justify-center py-4">
+                  <span className="text-4xl font-extrabold text-emerald-800">98.4%</span>
+                  <span className="text-xs font-medium text-slate-500 mt-1 text-center">
+                    Guidelines followed with zero unreviewed AI outputs
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                <h3 className="text-xs font-bold text-slate-500 mb-2">
+                  TARGET BENEFICIARIES COVERED
+                </h3>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500">Antenatal Care (ANC):</span>
+                    <span className="font-bold text-slate-900">42 Beneficiaries</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500">Child Immunization:</span>
+                    <span className="font-bold text-slate-900">58 Children (&lt;2 yrs)</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-slate-500">Presumptive TB Screening:</span>
+                    <span className="font-bold text-rose-700">14 Screened (1 Confirmed)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VIEW 8: MESSAGES FROM PHC */}
+        {/* ============================================================== */}
+        {activeNav === 'Messages' && (
+          <div className="p-8 space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Primary Health Centre (PHC) Communications
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Official announcements, diagnostic feedback, and clinical schedules
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4 max-w-2xl">
+              <div className="p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl space-y-1.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-emerald-950">Dr. A. K. Verma (District Hospital)</span>
+                  <span className="text-slate-500 text-[11px]">Today, 04:15 PM</span>
+                </div>
+                <p className="text-xs text-emerald-900">
+                  Referral token <strong>ASHA20261010-0042 (Kamal Singh)</strong> has been processed at the Chest Clinic. Sputum CBNAAT sample collected. Report scheduled for 24 Oct follow-up. Thank you for the fast triage.
+                </p>
+              </div>
+
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-slate-900">Pipra Sub-Centre Incharge</span>
+                  <span className="text-slate-500 text-[11px]">Yesterday, 09:30 AM</span>
+                </div>
+                <p className="text-xs text-slate-700">
+                  Reminder: Village Health Sanitation and Nutrition Day (VHSND) session is scheduled for Wednesday at Pipra Tola Anganwadi Centre. Ensure Pentavalent 3 and MR-1 dropouts are mobilized.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VIEW 9: SETTINGS & OFFLINE STORAGE */}
+        {/* ============================================================== */}
+        {activeNav === 'Settings' && (
+          <div className="p-8 space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Application Settings &amp; Offline Storage
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Manage IndexedDB offline drafts, local dialect preferences, and security
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs max-w-2xl space-y-5">
+              <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
+                <img
+                  src={CURRENT_USER.avatar}
+                  alt={CURRENT_USER.name}
+                  className="w-14 h-14 rounded-full object-cover ring-2 ring-emerald-600/30"
+                />
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    {CURRENT_USER.name}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    {CURRENT_USER.role} • ID: {CURRENT_USER.id}
+                  </p>
+                  <p className="text-xs text-emerald-700 font-semibold mt-0.5">
+                    {CURRENT_USER.subCentre} • {CURRENT_USER.district}
+                  </p>
+                </div>
+              </div>
+
+              {/* Offline sync */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-900 block">
+                    Offline Local Storage (IndexedDB)
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {storageStats.sizeFormatted} • {storageStats.queueCount} pending sync items
+                  </span>
+                </div>
+
+                <button
+                  onClick={handleManualSync}
+                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl flex items-center gap-2 transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Sync Now</span>
+                </button>
+              </div>
+
+              {syncFeedback && (
+                <p className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl font-medium">
+                  {syncFeedback}
+                </p>
+              )}
+
+              {/* Regional Dialects */}
+              <div className="space-y-2 pt-2">
+                <label className="text-xs font-bold text-slate-800 block">
+                  Local Speech &amp; Terminology Dialect
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {['Hindi (हिन्दी)', 'Bhojpuri', 'Bundeli', 'Marathi'].map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => setSelectedDialect(d)}
+                      className={`p-2.5 rounded-xl text-xs font-semibold border transition-all ${
+                        selectedDialect === d
+                          ? 'bg-emerald-50 border-emerald-600 text-emerald-900 font-bold'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* MODAL 1: VOICE VISIT RECORDING & AI SUMMARY DIALOG */}
+        {/* ============================================================== */}
+        {showVoiceModal && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                    <Mic className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">
+                      Voice Visit Capture &amp; AI Extraction
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Speak visit observations in Hindi or English
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowVoiceModal(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {!extractedData ? (
+                /* Step 1: Voice recording */
+                <div className="py-4 space-y-4">
+                  {/* Waveform & mic */}
+                  <div className="flex flex-col items-center justify-center py-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="flex items-center justify-center gap-1.5 h-8 w-48 mb-4">
+                      {[30, 60, 25, 80, 45, 70, 90, 40, 20, 65, 35].map((h, i) => (
+                        <span
+                          key={i}
+                          className={`w-1 rounded-full transition-all duration-300 ${
+                            isRecording ? 'bg-emerald-600 animate-pulse' : 'bg-slate-300'
+                          }`}
+                          style={{
+                            height: isRecording ? `${h}%` : '20%',
+                            animationDelay: `${i * 80}ms`,
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={toggleRecording}
+                      className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-lg transition-transform active:scale-95 ${
+                        isRecording ? 'bg-rose-600 hover:bg-rose-700' : 'bg-[#064e3b] hover:bg-[#043927]'
+                      }`}
+                    >
+                      {isRecording ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
+                    </button>
+
+                    <span className="text-xs font-semibold text-slate-700 mt-3">
+                      {isRecording ? 'Listening in real-time...' : 'Tap to start speaking'}
+                    </span>
+                  </div>
+
+                  {/* Transcript textarea */}
+                  <div>
+                    <div className="flex justify-between items-center text-xs text-slate-500 mb-1">
+                      <span>Transcript Preview:</span>
+                      <div className="flex gap-2 text-[11px]">
+                        <button
+                          onClick={() => setTranscript('सविता शर्मा का दूसरा ट्राइमेस्टर है। सिरदर्द और बहुत थकान लग रही है।')}
+                          className="text-emerald-700 hover:underline font-semibold"
+                        >
+                          Sample Savita (ANC)
+                        </button>
+                        <span>•</span>
+                        <button
+                          onClick={() => setTranscript('कमल सिंह को दो हफ्ते से ज्यादा से खांसी और रात में पसीना आ रहा है। वजन घटा है।')}
+                          className="text-rose-700 hover:underline font-semibold"
+                        >
+                          Sample Kamal (TB)
+                        </button>
+                      </div>
+                    </div>
+
+                    <textarea
+                      value={transcript}
+                      onChange={(e) => setTranscript(e.target.value)}
+                      placeholder="Spoken words will appear here, or you can type directly..."
+                      rows={3}
+                      className="w-full text-xs p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:border-emerald-600 text-slate-800 font-medium"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      onClick={handleProcessAI}
+                      disabled={isExtracting}
+                      className="w-full py-3 bg-[#064e3b] hover:bg-[#043927] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                    >
+                      {isExtracting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-emerald-300" />
+                          <span>Extracting structured data with AI...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 text-emerald-300" />
+                          <span>Process with AI Summary</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Step 2: AI Extracted summary review */
+                <div className="py-4 space-y-4 text-xs">
+                  <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-2.5">
+                    <div className="flex justify-between items-center pb-2 border-b border-emerald-200/60 font-bold text-emerald-950">
+                      <span>✨ Structured Fields</span>
+                      <button
+                        onClick={() => setIsEditingExtracted(!isEditingExtracted)}
+                        className="text-emerald-700 hover:underline text-[11px]"
+                      >
+                        {isEditingExtracted ? 'Done Editing' : 'Edit Fields'}
+                      </button>
+                    </div>
+
+                    <div className="space-y-1.5 text-slate-700">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Name:</span>
+                        <span className="font-bold text-slate-900">{extractedData.personName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Condition:</span>
+                        <span className="font-semibold">{extractedData.condition}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Symptoms:</span>
+                        <span className="text-right max-w-xs">{Array.isArray(extractedData.symptoms) ? extractedData.symptoms.join(', ') : extractedData.symptoms}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Follow-Up:</span>
+                        <span className="font-semibold text-emerald-800">{extractedData.followUp}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {saveSuccessMsg && (
+                    <div className="p-3 bg-emerald-100 border border-emerald-300 text-emerald-900 rounded-xl text-center font-bold">
+                      ✓ {saveSuccessMsg}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => setExtractedData(null)}
+                      className="px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-50"
+                    >
+                      Back
+                    </button>
+
+                    <button
+                      onClick={handleConfirmSaveVisit}
+                      disabled={isExtracting}
+                      className="flex-1 py-2.5 bg-[#064e3b] hover:bg-[#043927] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-1.5"
+                    >
+                      {isExtracting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        'Save & Commit Record'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* MODAL 2: RISK ALERT & PROTOCOL EXPLANATION */}
+        {/* ============================================================== */}
+        {showRiskModal && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-rose-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0">
+                    <AlertOctagon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-rose-950">
+                      High Priority Case Detected
+                    </h3>
+                    <p className="text-[11px] text-rose-700 font-semibold">
+                      Presumptive TB Screening Protocol
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowRiskModal(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs text-slate-700">
+                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                  <img
+                    src={ASSETS.kamalSingh}
+                    alt="Kamal Singh"
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-rose-300"
+                  />
+                  <div>
+                    <h4 className="font-bold text-slate-900">Kamal Singh</h4>
+                    <p className="text-[11px] text-slate-500">Age: 42 | Male • Pipra Purwa</p>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-rose-50/70 border border-rose-200 rounded-xl space-y-1.5 text-rose-900">
+                  <span className="font-bold block">NTEP Protocol Guidelines (Rule: NTEP-TB-RULE-01):</span>
+                  <p>1. Fast-track sputum smear microscopy / CBNAAT test at PHC.</p>
+                  <p>2. Provide N-95 or surgical mask and educate household.</p>
+                  <p>3. Generate urgent digital referral passport to District Hospital.</p>
+                </div>
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  onClick={handleIssueReferral}
+                  className="flex-1 py-3 bg-[#b91c1c] hover:bg-[#991b1b] text-white font-bold text-xs rounded-xl shadow-md transition-colors"
+                >
+                  Issue Digital Referral Passport
+                </button>
+                <button
+                  onClick={() => setShowRiskModal(false)}
+                  className="px-4 py-3 border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* MODAL 3: REFERRAL PASSPORT WITH SAFE QR CODE */}
+        {/* ============================================================== */}
+        {showPassportModal && activePassport && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-center">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 text-left">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Digital Referral Passport
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Safe lookup token • Zero PII exposed in QR
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowPassportModal(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* QR Code graphic */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col items-center">
+                <div className="p-2 bg-white rounded-xl shadow-xs border border-slate-100">
+                  <svg
+                    viewBox="0 0 160 160"
+                    className="w-36 h-36"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <rect width="160" height="160" fill="white" />
+                    <rect x="12" y="12" width="40" height="40" rx="6" stroke="#064e3b" strokeWidth="6" fill="white" />
+                    <rect x="22" y="22" width="20" height="20" rx="3" fill="#064e3b" />
+                    <rect x="108" y="12" width="40" height="40" rx="6" stroke="#064e3b" strokeWidth="6" fill="white" />
+                    <rect x="118" y="22" width="20" height="20" rx="3" fill="#064e3b" />
+                    <rect x="12" y="108" width="40" height="40" rx="6" stroke="#064e3b" strokeWidth="6" fill="white" />
+                    <rect x="22" y="118" width="20" height="20" rx="3" fill="#064e3b" />
+                    <g fill="#0b533e">
+                      <rect x="62" y="16" width="8" height="8" rx="1.5" />
+                      <rect x="80" y="16" width="8" height="8" rx="1.5" />
+                      <rect x="71" y="28" width="8" height="8" rx="1.5" />
+                      <rect x="89" y="28" width="8" height="8" rx="1.5" />
+                      <rect x="62" y="62" width="8" height="8" rx="1.5" />
+                      <rect x="74" y="62" width="8" height="8" rx="1.5" />
+                      <rect x="86" y="74" width="8" height="8" rx="1.5" />
+                      <rect x="112" y="62" width="8" height="8" rx="1.5" />
+                      <rect x="62" y="112" width="8" height="8" rx="1.5" />
+                      <rect x="74" y="124" width="8" height="8" rx="1.5" />
+                      <rect x="112" y="112" width="8" height="8" rx="1.5" />
+                    </g>
+                    <circle cx="80" cy="80" r="14" fill="white" stroke="#064e3b" strokeWidth="2.5" />
+                    <path
+                      d="M80 87C80 87 73 82.5 73 78C73 75.8 74.8 74 77 74C78.4 74 79.5 74.8 80 75.5C80.5 74.8 81.6 74 83 74C85.2 74 87 75.8 87 78C87 82.5 80 87 80 87Z"
+                      fill="#059669"
+                    />
+                  </svg>
+                </div>
+                <span className="font-mono text-xs font-bold text-slate-800 mt-2">
+                  {activePassport.referralCode}
+                </span>
+              </div>
+
+              <div className="space-y-1.5 text-xs text-left text-slate-700">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Patient:</span>
+                  <span className="font-bold text-slate-900">{activePassport.personName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Destination:</span>
+                  <span className="font-medium text-emerald-800">{activePassport.referredToFacility}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Date:</span>
+                  <span>{activePassport.date}</span>
+                </div>
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  onClick={() => {
+                    setShowPassportModal(false);
+                    setShowScannerModal(true);
+                  }}
+                  className="flex-1 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Test Health Desk Check-In</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* MODAL 4: FACILITY SCANNER MODAL */}
+        {/* ============================================================== */}
+        {showScannerModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-slate-950 text-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-800 space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    Facility Desk QR Scanner
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    District Hospital Pipra • Reception &amp; OPD
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowScannerModal(false)}
+                  className="text-slate-400 hover:text-white p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={scanInputToken}
+                  onChange={(e) => setScanInputToken(e.target.value)}
+                  placeholder="Referral Code or UUID token..."
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-emerald-500 focus:outline-hidden"
+                />
+                <button
+                  onClick={() => handleDeskValidation(scanInputToken)}
+                  disabled={isDeskLoading}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold transition-colors"
+                >
+                  {isDeskLoading ? 'Checking...' : 'Verify'}
+                </button>
+              </div>
+
+              {deskActionMsg && (
+                <p className="text-xs text-emerald-400 bg-emerald-950/70 border border-emerald-800 p-2.5 rounded-xl text-center font-bold">
+                  {deskActionMsg}
+                </p>
+              )}
+
+              {verifiedDeskReferral && (
+                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-3 text-xs">
+                  <div className="flex justify-between items-center text-emerald-400 font-bold">
+                    <span>✓ Token Authenticated</span>
+                    <span className="font-mono text-[11px]">{verifiedDeskReferral.referralCode}</span>
+                  </div>
+                  <p><strong>Patient:</strong> {verifiedDeskReferral.personName}</p>
+                  <p><strong>Reason:</strong> {verifiedDeskReferral.reason}</p>
+
+                  <div className="pt-2 flex gap-2">
+                    <button
+                      onClick={() => handleDeskRecordEvent('REACHED')}
+                      className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-white text-xs"
+                    >
+                      Record Arrival
+                    </button>
+                    <button
+                      onClick={() => handleDeskRecordEvent('CONSULTED')}
+                      className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold text-white text-xs"
+                    >
+                      Record Consultation
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* MODAL 5: PATIENT DETAIL MODAL */}
+        {/* ============================================================== */}
+        {showPatientDetailModal && (
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={showPatientDetailModal.avatarUrl || ASSETS.radhikaSharma}
+                    alt={showPatientDetailModal.name}
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-emerald-600/30"
+                  />
+                  <div>
+                    <h4 className="text-base font-bold text-slate-900">
+                      {showPatientDetailModal.name}
+                    </h4>
+                    <p className="text-xs text-slate-500">
+                      {showPatientDetailModal.age} yrs • {showPatientDetailModal.gender}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPatientDetailModal(null)}
+                  className="text-slate-400 hover:text-slate-600 p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <span className="font-semibold text-slate-700 block">Condition:</span>
+                  <span className="text-slate-900 text-sm font-medium">
+                    {showPatientDetailModal.condition}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1 p-2.5 bg-slate-50 rounded-xl">
+                    <span className="text-slate-500 block">Village</span>
+                    <span className="font-semibold text-slate-800">
+                      {showPatientDetailModal.village || 'Pipra Tola'}
+                    </span>
+                  </div>
+                  <div className="flex-1 p-2.5 bg-slate-50 rounded-xl">
+                    <span className="text-slate-500 block">Status</span>
+                    <span className="font-semibold text-emerald-700">
+                      {showPatientDetailModal.statusTag}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  onClick={() => {
+                    const name = showPatientDetailModal.name;
+                    setShowPatientDetailModal(null);
+                    setTranscript(`विजिट: ${name} की स्वास्थ्य जांच।`);
+                    setShowVoiceModal(true);
+                  }}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs transition-colors"
+                >
+                  Start Voice Visit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};

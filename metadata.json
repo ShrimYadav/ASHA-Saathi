@@ -1,0 +1,6 @@
+{
+  "name": "ASHA-Saathi Healthcare Platform",
+  "description": "Comprehensive healthcare platform for ASHA workers featuring patient tracking, voice-recorded visits, AI summaries, high-priority risk alerts, and digital referral passports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
