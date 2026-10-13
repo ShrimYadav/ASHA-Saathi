@@ -9,11 +9,20 @@ export interface Patient {
   lastVisit: string;
   statusTag: PatientPriority;
   category: 'Pregnant' | 'Children' | 'High Risk' | 'General';
+  householdId?: string;
+  relationshipToHead?: string;
   symptoms?: string[];
   phone?: string;
   village?: string;
   notes?: string;
   avatarUrl?: string;
+  vitals?: {
+    bp?: string;
+    weightKg?: number;
+    tempF?: number;
+    hemoglobin?: number;
+    pulseBpm?: number;
+  };
 }
 
 export interface ActivityItem {
@@ -43,7 +52,16 @@ export interface ReferralData {
   }[];
 }
 
-export type DialectOption = 'Hindi (हिन्दी)' | 'Bhojpuri' | 'Bundeli' | 'Marathi' | 'Rajasthani';
+export type DialectOption =
+  | 'Hindi (हिन्दी)'
+  | 'English'
+  | 'Bundeli (बुंदेली)'
+  | 'Bagheli (बघेली)'
+  | 'Malvi (मालवी)'
+  | 'Nimadi (निमाड़ी)'
+  | 'Bhojpuri (भोजपुरी)'
+  | 'Urdu (اردو)'
+  | 'Marathi (मराठी)';
 
 export type MobileScreenId =
   | 'splash'

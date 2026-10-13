@@ -2,11 +2,18 @@
 
 const BASE_URL = '/api/v1';
 
+let currentAuthToken: string | null =
+  typeof window !== 'undefined' ? localStorage.getItem('asha_saathi_token') : null;
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const headers = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers || {}),
+    ...(options.headers as Record<string, string> || {}),
   };
+
+  if (currentAuthToken && !headers['Authorization']) {
+    headers['Authorization'] = `Bearer ${currentAuthToken}`;
+  }
 
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
@@ -31,12 +38,47 @@ export const api = {
   checkHealth: () => request<{ status: string; timestamp: string }>('/health'),
 
   // Auth
-  login: (role: 'ASHA_WORKER' | 'HEALTH_FACILITY_OFFICER' = 'ASHA_WORKER', email?: string) =>
-    request<{ success: boolean; token: string; user: any }>('/auth/login', {
+  setToken: (token: string | null) => {
+    currentAuthToken = token;
+    if (typeof window !== 'undefined') {
+      if (token) {
+        localStorage.setItem('asha_saathi_token', token);
+      } else {
+        localStorage.removeItem('asha_saathi_token');
+      }
+    }
+  },
+
+  login: async (credentials: {
+    role?: 'ASHA_WORKER' | 'HEALTH_FACILITY_OFFICER';
+    email?: string;
+    phone?: string;
+    password?: string;
+  } | 'ASHA_WORKER' | 'HEALTH_FACILITY_OFFICER' = 'ASHA_WORKER', email?: string) => {
+    const payload = typeof credentials === 'string'
+      ? { role: credentials, email }
+      : credentials;
+    const res = await request<{ success: boolean; token: string; user: any }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ role, email }),
-    }),
-  getMe: () => request<{ user: any }>('/auth/me'),
+      body: JSON.stringify(payload),
+    });
+    if (res.success && res.token) {
+      api.setToken(res.token);
+    }
+    return res;
+  },
+
+  logout: async () => {
+    try {
+      await request('/auth/logout', { method: 'POST' });
+    } catch {
+      // ignore
+    } finally {
+      api.setToken(null);
+    }
+  },
+
+  getMe: () => request<{ user: any; isAuthenticated?: boolean }>('/auth/me'),
 
   // Dashboard
   getDashboard: () =>
@@ -107,6 +149,7 @@ export const api = {
 
   // Referrals
   getReferrals: () => request<{ referrals: any[]; total: number }>('/referrals'),
+  getReferralById: (id: string) => request<{ success: boolean; referral: any }>(`/referrals/${id}`),
   createReferral: (payload: {
     personId: string;
     personName: string;
@@ -143,15 +186,46 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  // Reports
+  // Reports & Analytics
   getReports: () =>
     request<{
       analytics: {
-        totalBeneficiaries: number;
-        totalHouseholdsCovered: number;
-        referralFunnel: any;
-        categoryBreakdown: any;
-        protocolAdherencePercent: number;
+        summary?: {
+          monthlyVisitsCompleted: number;
+          monthlyTarget: number;
+          visitsCompletionRate: number;
+          referralSuccessRate: number;
+          totalReferralsTracked: number;
+          referralsResolved: number;
+          totalBeneficiaries: number;
+          totalHouseholdsCovered: number;
+          protocolAdherencePercent: number;
+          avgVisitsPerDay: number;
+        };
+        monthlyVisits?: Array<{
+          month: string;
+          visitsCompleted: number;
+          target: number;
+          ancVisits: number;
+          childImmunization: number;
+          highRiskVisits: number;
+          generalVisits: number;
+        }>;
+        referralStats?: {
+          totalReferrals: number;
+          reachedFacility: number;
+          consultedCompleted: number;
+          inTransit: number;
+          overallSuccessRate: number;
+          trends: Array<{ month: string; issued: number; resolved: number; rate: number }>;
+          funnel: Array<{ stage: string; count: number; percent: number }>;
+        };
+        demographics?: {
+          categories: Array<{ name: string; key: string; value: number; color: string; description: string }>;
+          ageCohorts: Array<{ cohort: string; female: number; male: number; total: number }>;
+          conditions: Array<{ condition: string; count: number; severity: string }>;
+        };
+        [key: string]: any;
       };
     }>('/reports'),
 

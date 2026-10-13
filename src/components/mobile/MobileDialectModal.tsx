@@ -11,13 +11,17 @@ export const MobileDialectModal: React.FC<MobileDialectModalProps> = ({
   onSelectDialect,
   onClose,
 }) => {
-  const [selected, setSelected] = useState<DialectOption>('Bhojpuri');
+  const [selected, setSelected] = useState<DialectOption>('Hindi (हिन्दी)');
 
   const dialects: DialectOption[] = [
-    'Bhojpuri',
-    'Bundeli',
-    'Marathi',
-    'Rajasthani',
+    'Hindi (हिन्दी)',
+    'Bundeli (बुंदेली)',
+    'Bagheli (बघेली)',
+    'Malvi (मालवी)',
+    'Nimadi (निमाड़ी)',
+    'Bhojpuri (भोजपुरी)',
+    'Urdu (اردو)',
+    'Marathi (मराठी)',
   ];
 
   const handleApply = () => {

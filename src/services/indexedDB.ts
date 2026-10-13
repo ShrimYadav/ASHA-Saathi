@@ -4,15 +4,16 @@ const DB_NAME = 'asha_saathi_offline_db';
 const DB_VERSION = 1;
 
 export interface OfflineVisitDraft {
-  id: string;
-  personId: string;
+  id?: string;
+  personId?: string;
   personName: string;
-  transcript: string;
+  transcript?: string;
   symptoms: string[];
   condition: string;
   notes: string;
-  timestamp: string;
-  isSynced: boolean;
+  timestamp?: string;
+  isSynced?: boolean;
+  date?: string;
 }
 
 export interface SyncQueueItem {
@@ -44,9 +45,15 @@ function openDB(): Promise<IDBDatabase> {
 export const offlineStorage = {
   async saveDraftVisit(draft: OfflineVisitDraft): Promise<void> {
     const db = await openDB();
+    const itemToSave = {
+      id: draft.id || `draft_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      timestamp: draft.timestamp || new Date().toISOString(),
+      isSynced: false,
+      ...draft,
+    };
     return new Promise((resolve, reject) => {
       const tx = db.transaction('draft_visits', 'readwrite');
-      tx.objectStore('draft_visits').put(draft);
+      tx.objectStore('draft_visits').put(itemToSave);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
@@ -67,6 +74,16 @@ export const offlineStorage = {
     return new Promise((resolve, reject) => {
       const tx = db.transaction('draft_visits', 'readwrite');
       tx.objectStore('draft_visits').delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  },
+
+  async clearDraftVisits(): Promise<void> {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('draft_visits', 'readwrite');
+      tx.objectStore('draft_visits').clear();
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
