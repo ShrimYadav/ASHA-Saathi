@@ -74,7 +74,7 @@ export interface Visit {
 export interface ReferralEvent {
   id: string;
   referralId: string;
-  eventType: 'GENERATED' | 'REACHED' | 'CONSULTED' | 'FOLLOWUP_SCHEDULED';
+  eventType: 'GENERATED' | 'REACHED' | 'CONSULTED' | 'FOLLOWUP_SCHEDULED' | 'COMPLETED';
   title: string;
   timestamp: string;
   facilityName: string;

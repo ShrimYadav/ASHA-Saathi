@@ -1,0 +1,1342 @@
+{
+  "users": [
+    {
+      "id": "USR-01",
+      "name": "Sunita Devi",
+      "role": "ASHA_WORKER",
+      "email": "sunita.devi@asha.gov.in",
+      "phone": "+91 98391 24510",
+      "block": "Pipra Block",
+      "subCentre": "Pipra Sub-Centre",
+      "phc": "Primary Health Centre Pipra",
+      "district": "Gorakhpur, Uttar Pradesh",
+      "passwordHash": "1bb12119c95fa9cd52bd09d281ccce7743190930bb9dad9620edd9afaaf1a02d6c9e5c9064b4ad4382f2f3cfbe89db6766919aa03e24b6f8522c05266b8590cb",
+      "salt": "asha_saathi_secure_salt_2026"
+    },
+    {
+      "id": "USR-02",
+      "name": "Dr. A. K. Verma",
+      "role": "HEALTH_FACILITY_OFFICER",
+      "email": "dr.verma@district-hospital.gov.in",
+      "phone": "+91 98112 34567",
+      "block": "District Hospital Pipra",
+      "subCentre": "OPD & Chest Clinic",
+      "phc": "District Hospital",
+      "district": "Gorakhpur, Uttar Pradesh",
+      "passwordHash": "c4f52377b29a854b7424dc7b66f8ab966e6667b62e18885d21d738528265df8c412d4c2487a81e230d571e5ce118840a9d6c7952f5e7cc84403141da25884d49",
+      "salt": "asha_saathi_secure_salt_2026"
+    }
+  ],
+  "households": [
+    {
+      "id": "HH-01",
+      "code": "HH-PIP-001",
+      "headName": "Ramesh Chandra Sharma",
+      "tola": "Pipra Tola",
+      "village": "Pipra",
+      "familyMembersCount": 4,
+      "assignedWorkerId": "USR-01",
+      "rationCardType": "BPL",
+      "lastVisitDate": "2026-10-09"
+    },
+    {
+      "id": "HH-02",
+      "code": "HH-PIP-002",
+      "headName": "Dinanath Yadav",
+      "tola": "Bishanpur",
+      "village": "Pipra",
+      "familyMembersCount": 5,
+      "assignedWorkerId": "USR-01",
+      "rationCardType": "Antyodaya",
+      "lastVisitDate": "2026-10-08"
+    },
+    {
+      "id": "HH-03",
+      "code": "HH-PIP-003",
+      "headName": "Harishanker Singh",
+      "tola": "Pipra Purwa",
+      "village": "Pipra",
+      "familyMembersCount": 3,
+      "assignedWorkerId": "USR-01",
+      "rationCardType": "BPL",
+      "lastVisitDate": "2026-10-05"
+    },
+    {
+      "id": "HH-04",
+      "code": "HH-PIP-004",
+      "headName": "Manoj Kumar Verma",
+      "tola": "Kalyanpur",
+      "village": "Pipra",
+      "familyMembersCount": 4,
+      "assignedWorkerId": "USR-01",
+      "rationCardType": "APL",
+      "lastVisitDate": "2026-10-03"
+    },
+    {
+      "id": "HH-05",
+      "code": "HH-PIP-005",
+      "headName": "Ghanshyam Patel",
+      "tola": "Pipra Tola",
+      "village": "Pipra",
+      "familyMembersCount": 3,
+      "assignedWorkerId": "USR-01",
+      "rationCardType": "APL",
+      "lastVisitDate": "2026-09-18"
+    },
+    {
+      "id": "HH-06",
+      "code": "HH-PIP-006",
+      "headName": "Balkishan Nishad",
+      "tola": "Bishanpur South",
+      "village": "Pipra",
+      "familyMembersCount": 4,
+      "assignedWorkerId": "USR-01",
+      "rationCardType": "BPL",
+      "lastVisitDate": "2026-10-07"
+    },
+    {
+      "id": "HH-07",
+      "code": "HH-PIP-007",
+      "headName": "Ramdev Paswan",
+      "tola": "Pipra Purwa East",
+      "village": "Pipra",
+      "familyMembersCount": 3,
+      "assignedWorkerId": "USR-01",
+      "rationCardType": "Antyodaya",
+      "lastVisitDate": "2026-10-06"
+    },
+    {
+      "id": "HH-08",
+      "code": "HH-PIP-008",
+      "headName": "Noor Mohammad Ansari",
+      "tola": "Kalyanpur West",
+      "village": "Pipra",
+      "familyMembersCount": 5,
+      "assignedWorkerId": "USR-01",
+      "rationCardType": "BPL",
+      "lastVisitDate": "2026-10-04"
+    },
+    {
+      "id": "HH-09",
+      "code": "HH-PIP-009",
+      "headName": "Chhotelal Prajapati",
+      "tola": "Kumhar Tola",
+      "village": "Pipra",
+      "familyMembersCount": 4,
+      "assignedWorkerId": "USR-01",
+      "rationCardType": "BPL",
+      "lastVisitDate": "2026-10-02"
+    },
+    {
+      "id": "HH-10",
+      "code": "HH-PIP-010",
+      "headName": "Tribhuvan Pandey",
+      "tola": "Pipra Uttar",
+      "village": "Pipra",
+      "familyMembersCount": 3,
+      "assignedWorkerId": "USR-01",
+      "rationCardType": "APL",
+      "lastVisitDate": "2026-10-01"
+    }
+  ],
+  "people": [
+    {
+      "id": "P01",
+      "householdId": "HH-01",
+      "name": "Radhika Sharma",
+      "age": 24,
+      "gender": "Female",
+      "relationshipToHead": "Daughter-in-law",
+      "category": "Pregnant",
+      "condition": "Pregnant (2nd Trimester)",
+      "phone": "+91 98391 24510",
+      "lastVisitDate": "2026-08-10",
+      "statusTag": "Follow Up",
+      "symptoms": [
+        "Mild fatigue",
+        "Normal fetal heart rate"
+      ],
+      "vitals": {
+        "bp": "115/75",
+        "weightKg": 54,
+        "hemoglobin": 10.2
+      }
+    },
+    {
+      "id": "P02",
+      "householdId": "HH-01",
+      "name": "Virendra Sharma",
+      "age": 29,
+      "gender": "Male",
+      "relationshipToHead": "Son",
+      "category": "General",
+      "condition": "Seasonal Viral Recovery",
+      "phone": "+91 98391 24510",
+      "lastVisitDate": "2026-10-06",
+      "statusTag": "Routine",
+      "symptoms": [
+        "Fever resolved",
+        "Oral hydration counselled"
+      ],
+      "vitals": {
+        "bp": "116/76",
+        "weightKg": 64,
+        "tempF": 98.4
+      }
+    },
+    {
+      "id": "P03",
+      "householdId": "HH-02",
+      "name": "Savitri Yadav",
+      "age": 44,
+      "gender": "Female",
+      "relationshipToHead": "Wife",
+      "category": "General",
+      "condition": "Routine Frontline Health Review",
+      "phone": "+91 94520 89134",
+      "lastVisitDate": "10 Oct 2026",
+      "statusTag": "Follow Up",
+      "symptoms": [
+        "Persistent cough (>2 weeks)",
+        "Night sweats",
+        "Unexplained weight loss"
+      ],
+      "vitals": {
+        "bp": "122/80",
+        "weightKg": 58,
+        "tempF": 98.4
+      }
+    },
+    {
+      "id": "P04",
+      "householdId": "HH-02",
+      "name": "Aarav Yadav",
+      "age": 1,
+      "gender": "Male",
+      "relationshipToHead": "Grandson",
+      "category": "Children",
+      "condition": "Missed Immunization Dropout (Pentavalent-3 Due)",
+      "phone": "+91 94520 89134",
+      "lastVisitDate": "10 Oct 2026",
+      "statusTag": "Follow Up",
+      "symptoms": [
+        "No acute symptoms"
+      ],
+      "vitals": {
+        "weightKg": 8.9,
+        "tempF": 98.4
+      }
+    },
+    {
+      "id": "P05",
+      "householdId": "HH-03",
+      "name": "Kamal Singh",
+      "age": 42,
+      "gender": "Male",
+      "relationshipToHead": "Brother",
+      "category": "High Risk",
+      "condition": "TB Suspect",
+      "phone": "+91 97214 55678",
+      "lastVisitDate": "2026-10-05",
+      "statusTag": "High Priority",
+      "symptoms": [
+        "Persistent cough (>2 weeks)",
+        "Weight loss",
+        "Night sweats",
+        "Blood in sputum (mild)"
+      ],
+      "vitals": {
+        "tempF": 99.8,
+        "weightKg": 49
+      }
+    },
+    {
+      "id": "P06",
+      "householdId": "HH-03",
+      "name": "Sarita Singh",
+      "age": 38,
+      "gender": "Female",
+      "relationshipToHead": "Wife",
+      "category": "General",
+      "condition": "Nutritional Anemia Review",
+      "phone": "+91 97214 55678",
+      "lastVisitDate": "2026-09-22",
+      "statusTag": "Follow Up",
+      "symptoms": [
+        "Chronic fatigue",
+        "Pale conjunctiva",
+        "Low dietary iron"
+      ],
+      "vitals": {
+        "bp": "108/70",
+        "hemoglobin": 9.6,
+        "weightKg": 50
+      }
+    },
+    {
+      "id": "P07",
+      "householdId": "HH-04",
+      "name": "Pooja Verma",
+      "age": 22,
+      "gender": "Female",
+      "relationshipToHead": "Wife",
+      "category": "Pregnant",
+      "condition": "Postnatal Care Day 14",
+      "phone": "+91 91612 33490",
+      "lastVisitDate": "2026-10-03",
+      "statusTag": "Routine",
+      "symptoms": [
+        "Postnatal Day 14",
+        "Infant latching well"
+      ],
+      "vitals": {
+        "bp": "118/78",
+        "hemoglobin": 11.4
+      }
+    },
+    {
+      "id": "P08",
+      "householdId": "HH-04",
+      "name": "Vikas Verma",
+      "age": 4,
+      "gender": "Male",
+      "relationshipToHead": "Son",
+      "category": "Children",
+      "condition": "Early Childhood Growth Monitoring",
+      "phone": "+91 91612 33490",
+      "lastVisitDate": "2026-09-20",
+      "statusTag": "Routine",
+      "symptoms": [
+        "Normal growth milestones",
+        "Vitamin A dose administered"
+      ],
+      "vitals": {
+        "weightKg": 14.8,
+        "tempF": 98.2
+      }
+    },
+    {
+      "id": "P09",
+      "householdId": "HH-05",
+      "name": "Meena Patel",
+      "age": 52,
+      "gender": "Female",
+      "relationshipToHead": "Wife",
+      "category": "High Risk",
+      "condition": "Hypertension (Stage 2)",
+      "phone": "+91 99182 45781",
+      "lastVisitDate": "2026-09-18",
+      "statusTag": "High Priority",
+      "symptoms": [
+        "BP 152/94",
+        "Morning occipital headache",
+        "Occasional dizziness"
+      ],
+      "vitals": {
+        "bp": "152/94",
+        "pulseBpm": 82
+      }
+    },
+    {
+      "id": "P10",
+      "householdId": "HH-05",
+      "name": "Ankit Patel",
+      "age": 19,
+      "gender": "Male",
+      "relationshipToHead": "Son",
+      "category": "General",
+      "condition": "General Health & Deworming",
+      "phone": "+91 99182 45781",
+      "lastVisitDate": "2026-09-10",
+      "statusTag": "Routine",
+      "symptoms": [
+        "Albendazole administered",
+        "No complaints"
+      ],
+      "vitals": {
+        "bp": "118/74",
+        "weightKg": 58,
+        "tempF": 98.4
+      }
+    },
+    {
+      "id": "P11",
+      "householdId": "HH-06",
+      "name": "Kavita Nishad",
+      "age": 26,
+      "gender": "Female",
+      "relationshipToHead": "Wife",
+      "category": "Pregnant",
+      "condition": "Gestational Diabetes Screening",
+      "phone": "+91 97920 11452",
+      "lastVisitDate": "2026-10-07",
+      "statusTag": "Routine",
+      "symptoms": [
+        "Normal fasting glucose (88 mg/dL)",
+        "Mild morning sickness"
+      ],
+      "vitals": {
+        "bp": "112/74",
+        "weightKg": 53,
+        "hemoglobin": 11
+      }
+    },
+    {
+      "id": "P12",
+      "householdId": "HH-06",
+      "name": "Munna Nishad",
+      "age": 3,
+      "gender": "Male",
+      "relationshipToHead": "Son",
+      "category": "Children",
+      "condition": "Growth & Stunting Assessment",
+      "phone": "+91 97920 11452",
+      "lastVisitDate": "2026-09-30",
+      "statusTag": "Follow Up",
+      "symptoms": [
+        "MUAC tape green (13.5cm)",
+        "Appetite good",
+        "Deworming completed"
+      ],
+      "vitals": {
+        "weightKg": 12.1,
+        "tempF": 98.2
+      }
+    },
+    {
+      "id": "P13",
+      "householdId": "HH-07",
+      "name": "Kanti Devi",
+      "age": 54,
+      "gender": "Female",
+      "relationshipToHead": "Wife",
+      "category": "General",
+      "condition": "Chronic Knee Osteoarthritis & Calcium Therapy",
+      "phone": "+91 96160 88231",
+      "lastVisitDate": "2026-10-04",
+      "statusTag": "Routine",
+      "symptoms": [
+        "Bilateral knee pain during walking",
+        "Prescribed calcium & Vit D"
+      ],
+      "vitals": {
+        "bp": "128/82",
+        "weightKg": 61,
+        "tempF": 98.6
+      }
+    },
+    {
+      "id": "P14",
+      "householdId": "HH-07",
+      "name": "Suraj Paswan",
+      "age": 28,
+      "gender": "Male",
+      "relationshipToHead": "Son",
+      "category": "General",
+      "condition": "Post-Viral Fatigue Recovery",
+      "phone": "+91 96160 88231",
+      "lastVisitDate": "2026-09-25",
+      "statusTag": "Routine",
+      "symptoms": [
+        "Full recovery",
+        "Vitals within normal limits"
+      ],
+      "vitals": {
+        "bp": "120/78",
+        "weightKg": 65,
+        "tempF": 98.4
+      }
+    },
+    {
+      "id": "P15",
+      "householdId": "HH-08",
+      "name": "Shabana Ansari",
+      "age": 28,
+      "gender": "Female",
+      "relationshipToHead": "Wife",
+      "category": "Pregnant",
+      "condition": "High-Risk Maternal Care (3rd Trimester Anemia)",
+      "phone": "+91 95590 44219",
+      "lastVisitDate": "2026-10-07",
+      "statusTag": "High Priority",
+      "symptoms": [
+        "Severe fatigue",
+        "Hemoglobin 8.4 g/dL",
+        "Fetal movement normal"
+      ],
+      "vitals": {
+        "bp": "106/68",
+        "hemoglobin": 8.4,
+        "weightKg": 56
+      }
+    },
+    {
+      "id": "P16",
+      "householdId": "HH-08",
+      "name": "Tariq Ansari",
+      "age": 6,
+      "gender": "Male",
+      "relationshipToHead": "Son",
+      "category": "Children",
+      "condition": "Childhood Vision & Vitamin A Prophylaxis",
+      "phone": "+91 95590 44219",
+      "lastVisitDate": "2026-09-12",
+      "statusTag": "Routine",
+      "symptoms": [
+        "Biannual Vitamin A dose administered",
+        "Eye checkup normal"
+      ],
+      "vitals": {
+        "weightKg": 19.2,
+        "tempF": 98.4
+      }
+    },
+    {
+      "id": "P17",
+      "householdId": "HH-09",
+      "name": "Geeta Prajapati",
+      "age": 31,
+      "gender": "Female",
+      "relationshipToHead": "Wife",
+      "category": "General",
+      "condition": "Thyroid Goiter Screening",
+      "phone": "+91 94150 77123",
+      "lastVisitDate": "2026-09-29",
+      "statusTag": "Follow Up",
+      "symptoms": [
+        "Mild neck fullness",
+        "TSH test requested at PHC"
+      ],
+      "vitals": {
+        "bp": "116/74",
+        "weightKg": 52,
+        "tempF": 98.2
+      }
+    },
+    {
+      "id": "P18",
+      "householdId": "HH-10",
+      "name": "Rajesh Pandey",
+      "age": 48,
+      "gender": "Male",
+      "relationshipToHead": "Head of Family",
+      "category": "High Risk",
+      "condition": "Type-2 Diabetes Regular Monitoring",
+      "phone": "+91 93350 99812",
+      "lastVisitDate": "2026-10-02",
+      "statusTag": "Routine",
+      "symptoms": [
+        "Fasting blood sugar 134 mg/dL",
+        "Metformin adherence good"
+      ],
+      "vitals": {
+        "bp": "130/84",
+        "weightKg": 70,
+        "tempF": 98.4
+      }
+    }
+  ],
+  "visits": [
+    {
+      "id": "VIS-01",
+      "personId": "P01",
+      "personName": "Radhika Sharma",
+      "householdId": "HH-01",
+      "workerId": "USR-01",
+      "date": "10 Oct 2026",
+      "time": "10:24 AM",
+      "language": "Hindi (हिन्दी)",
+      "transcript": "राधिका शर्मा का दूसरा ट्राइमेस्टर है। हल्का सिरदर्द और थकान है। बीपी ठीक है।",
+      "symptoms": [
+        "Mild fatigue",
+        "Mild headache"
+      ],
+      "condition": "Pregnant (2nd Trimester)",
+      "notes": "ANC routine follow-up completed. IFA tablets supplied.",
+      "status": "CONFIRMED",
+      "priorityLevel": "FOLLOW_UP",
+      "riskRuleId": "MOHFW-ANC-RULE-03",
+      "followUpDate": "24 Oct 2026",
+      "createdAt": "2026-10-14T14:09:57.579Z"
+    },
+    {
+      "id": "VIS-02",
+      "personId": "P05",
+      "personName": "Kamal Singh",
+      "householdId": "HH-03",
+      "workerId": "USR-01",
+      "date": "10 Oct 2026",
+      "time": "09:00 AM",
+      "language": "Hindi (हिन्दी)",
+      "transcript": "कमल सिंह को दो हफ्ते से ज्यादा से खांसी है। वजन घट रहा है और रात में पसीना आता है।",
+      "symptoms": [
+        "Persistent cough (>2 weeks)",
+        "Weight loss",
+        "Night sweats"
+      ],
+      "condition": "TB Suspect",
+      "notes": "Presumptive pulmonary TB symptoms present. Referred immediately.",
+      "status": "CONFIRMED",
+      "priorityLevel": "HIGH_PRIORITY",
+      "riskRuleId": "NTEP-TB-RULE-01",
+      "followUpDate": "12 Oct 2026",
+      "createdAt": "2026-10-14T14:09:57.579Z"
+    },
+    {
+      "id": "VIS-03",
+      "personId": "P07",
+      "personName": "Pooja Verma",
+      "householdId": "HH-04",
+      "workerId": "USR-01",
+      "date": "09 Oct 2026",
+      "time": "03:15 PM",
+      "language": "Hindi (हिन्दी)",
+      "transcript": "पूजा वर्मा का प्रसव बाद 14वां दिन। शिशु स्तनपान कर रहा है। माता का बीपी 118/78 सामान्य।",
+      "symptoms": [
+        "Normal postpartum recovery"
+      ],
+      "condition": "Postnatal Care Day 14",
+      "notes": "PNC home visit. Maternal nutrition and exclusive breastfeeding advised.",
+      "status": "CONFIRMED",
+      "priorityLevel": "ROUTINE",
+      "riskRuleId": "MOHFW-PNC-RULE-01",
+      "followUpDate": "23 Oct 2026",
+      "createdAt": "2026-10-14T14:09:57.579Z"
+    },
+    {
+      "id": "VIS-04",
+      "personId": "P09",
+      "personName": "Meena Patel",
+      "householdId": "HH-05",
+      "workerId": "USR-01",
+      "date": "08 Oct 2026",
+      "time": "04:30 PM",
+      "language": "Hindi (हिन्दी)",
+      "transcript": "मीना पटेल को सिरदर्द की शिकायत। बीपी 152/94 मिला। दवा की समीक्षा आवश्यक है।",
+      "symptoms": [
+        "Headache",
+        "Elevated Blood Pressure"
+      ],
+      "condition": "Hypertension (Stage 2)",
+      "notes": "High BP recorded. Referral token issued to PHC for physician consultation.",
+      "status": "CONFIRMED",
+      "priorityLevel": "HIGH_PRIORITY",
+      "riskRuleId": "NCD-HTN-PROTOCOL-02",
+      "followUpDate": "15 Oct 2026",
+      "createdAt": "2026-10-14T14:09:57.579Z"
+    },
+    {
+      "id": "VIS-05",
+      "personId": "P15",
+      "personName": "Shabana Ansari",
+      "householdId": "HH-08",
+      "workerId": "USR-01",
+      "date": "08 Oct 2026",
+      "time": "11:00 AM",
+      "language": "Hindi (हिन्दी)",
+      "transcript": "शबाना अंसारी तीसरा ट्राइमेस्टर। हीमोग्लोबिन 8.4 मिला। अत्यधिक कमजोरी की शिकायत।",
+      "symptoms": [
+        "Severe fatigue",
+        "Pallor",
+        "Low Hemoglobin"
+      ],
+      "condition": "High-Risk Maternal Care (3rd Trimester Anemia)",
+      "notes": "Severe gestational anemia triage. Facilitated emergency hospital referral.",
+      "status": "CONFIRMED",
+      "priorityLevel": "HIGH_PRIORITY",
+      "riskRuleId": "MOHFW-ANC-ANEMIA-01",
+      "followUpDate": "11 Oct 2026",
+      "createdAt": "2026-10-14T14:09:57.579Z"
+    },
+    {
+      "id": "VIS-06",
+      "personId": "P13",
+      "personName": "Kanti Devi",
+      "householdId": "HH-07",
+      "workerId": "USR-01",
+      "date": "07 Oct 2026",
+      "time": "01:45 PM",
+      "language": "Hindi (हिन्दी)",
+      "transcript": "कांति देवी को घुटनों का पुराना दर्द। कैल्शियम व विटामिन डी नियमित लेने की सलाह।",
+      "symptoms": [
+        "Joint pain",
+        "Difficulty climbing stairs"
+      ],
+      "condition": "Chronic Knee Osteoarthritis & Calcium Therapy",
+      "notes": "Geriatric frontline health visit. Calcium tablets provided.",
+      "status": "CONFIRMED",
+      "priorityLevel": "ROUTINE",
+      "riskRuleId": "NCD-GERIATRIC-01",
+      "followUpDate": "07 Nov 2026",
+      "createdAt": "2026-10-14T14:09:57.579Z"
+    }
+  ],
+  "referrals": [
+    {
+      "id": "REF-01",
+      "referralCode": "ASHA20261010-0042",
+      "secureToken": "tok_5b8f9e2a_c410_4f92_9876_tb_kamal",
+      "personId": "P05",
+      "personName": "Kamal Singh",
+      "personAge": 42,
+      "personGender": "Male",
+      "householdId": "HH-03",
+      "workerId": "USR-01",
+      "referredToFacility": "District Hospital",
+      "reason": "Possible TB Symptoms Detected (Persistent cough > 2 weeks, night sweats)",
+      "protocolCode": "NTEP-TB-RULE-01",
+      "urgency": "HIGH_PRIORITY",
+      "status": "CONSULTED",
+      "date": "10 Oct 2026",
+      "createdAt": "2026-10-14T14:09:57.578Z",
+      "events": [
+        {
+          "id": "EVT-01",
+          "referralId": "REF-01",
+          "eventType": "GENERATED",
+          "title": "Referral Generated",
+          "timestamp": "10 Oct 2026, 09:12 AM",
+          "facilityName": "Pipra Sub-Centre",
+          "recordedBy": "Sunita Devi (ASHA)",
+          "notes": "Advised sputum collection and face mask precautions."
+        },
+        {
+          "id": "EVT-02",
+          "referralId": "REF-01",
+          "eventType": "REACHED",
+          "title": "Reached Health Centre",
+          "timestamp": "10 Oct 2026, 02:18 PM",
+          "facilityName": "District Hospital Pipra",
+          "recordedBy": "Reception Desk",
+          "notes": "Token scanned. Patient registered at Chest Clinic OPD."
+        },
+        {
+          "id": "EVT-03",
+          "referralId": "REF-01",
+          "eventType": "CONSULTED",
+          "title": "Consultation Completed",
+          "timestamp": "10 Oct 2026, 04:05 PM",
+          "facilityName": "District Hospital Pipra",
+          "recordedBy": "Dr. A. K. Verma",
+          "notes": "CBNAAT test sample collected. Sputum smear microscopy ordered."
+        }
+      ]
+    },
+    {
+      "id": "REF-02",
+      "referralCode": "ASHA20261010-0089",
+      "secureToken": "tok_7a1c3d9e_maternal_anemia_shabana",
+      "personId": "P15",
+      "personName": "Shabana Ansari",
+      "personAge": 28,
+      "personGender": "Female",
+      "householdId": "HH-08",
+      "workerId": "USR-01",
+      "referredToFacility": "District Hospital Pipra (Maternity Wing)",
+      "reason": "Severe Gestational Anemia (Hb 8.4 g/dL in 3rd trimester)",
+      "protocolCode": "MOHFW-ANC-ANEMIA-01",
+      "urgency": "HIGH_PRIORITY",
+      "status": "REACHED",
+      "date": "09 Oct 2026",
+      "createdAt": "2026-10-14T14:09:57.579Z",
+      "events": [
+        {
+          "id": "EVT-04",
+          "referralId": "REF-02",
+          "eventType": "GENERATED",
+          "title": "Referral Generated",
+          "timestamp": "09 Oct 2026, 11:30 AM",
+          "facilityName": "Pipra Sub-Centre",
+          "recordedBy": "Sunita Devi (ASHA)",
+          "notes": "Urgent parenteral iron infusion / obstetric review recommended."
+        },
+        {
+          "id": "EVT-05",
+          "referralId": "REF-02",
+          "eventType": "REACHED",
+          "title": "Reached Health Centre",
+          "timestamp": "10 Oct 2026, 10:15 AM",
+          "facilityName": "District Hospital Pipra",
+          "recordedBy": "Maternity OPD Desk",
+          "notes": "Token validated. Admitted to daycare for IV Iron Sucrose administration."
+        }
+      ]
+    },
+    {
+      "id": "REF-03",
+      "referralCode": "ASHA20261010-0114",
+      "secureToken": "tok_9f4e2b1a_hypertension_meena",
+      "personId": "P09",
+      "personName": "Meena Patel",
+      "personAge": 52,
+      "personGender": "Female",
+      "householdId": "HH-05",
+      "workerId": "USR-01",
+      "referredToFacility": "Primary Health Centre Pipra",
+      "reason": "Uncontrolled Stage-2 Hypertension (BP 152/94 mmHg)",
+      "protocolCode": "NCD-HTN-PROTOCOL-02",
+      "urgency": "HIGH_PRIORITY",
+      "status": "ISSUED",
+      "date": "08 Oct 2026",
+      "createdAt": "2026-10-14T14:09:57.579Z",
+      "events": [
+        {
+          "id": "EVT-06",
+          "referralId": "REF-03",
+          "eventType": "GENERATED",
+          "title": "Referral Generated",
+          "timestamp": "08 Oct 2026, 04:45 PM",
+          "facilityName": "Pipra Sub-Centre",
+          "recordedBy": "Sunita Devi (ASHA)",
+          "notes": "Advised medical officer evaluation for dual antihypertensive therapy."
+        }
+      ]
+    },
+    {
+      "id": "REF-04",
+      "referralCode": "ASHA20261010-0156",
+      "secureToken": "tok_3c8a1b7e_immunization_aarav",
+      "personId": "P04",
+      "personName": "Aarav Yadav",
+      "personAge": 1,
+      "personGender": "Male",
+      "householdId": "HH-02",
+      "workerId": "USR-01",
+      "referredToFacility": "Pipra Sub-Centre VHSND Session",
+      "reason": "Immunization Catch-up for Pentavalent-3 and MR-1 dropout",
+      "protocolCode": "UIP-VACCINE-DROP-01",
+      "urgency": "ROUTINE",
+      "status": "COMPLETED",
+      "date": "07 Oct 2026",
+      "createdAt": "2026-10-14T14:09:57.579Z",
+      "events": [
+        {
+          "id": "EVT-07",
+          "referralId": "REF-04",
+          "eventType": "GENERATED",
+          "title": "Referral Generated",
+          "timestamp": "07 Oct 2026, 08:30 AM",
+          "facilityName": "Pipra Sub-Centre",
+          "recordedBy": "Sunita Devi (ASHA)",
+          "notes": "Mobilized mother to bring child for missed booster."
+        },
+        {
+          "id": "EVT-08",
+          "referralId": "REF-04",
+          "eventType": "COMPLETED",
+          "title": "Vaccination Administered",
+          "timestamp": "08 Oct 2026, 11:00 AM",
+          "facilityName": "Anganwadi Centre Bishanpur",
+          "recordedBy": "ANM Rekha Singh",
+          "notes": "Pentavalent-3 booster given. Mother counselled on next MR-1 dose."
+        }
+      ]
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "AUD-1791988058861-294",
+      "action": "CREATE_PERSON",
+      "entityType": "PERSON",
+      "entityId": "P19",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:27:38.861Z",
+      "details": "Registered beneficiary Poonam Maurya"
+    },
+    {
+      "id": "AUD-1791988058853-905",
+      "action": "CREATE_HOUSEHOLD",
+      "entityType": "HOUSEHOLD",
+      "entityId": "HH-11",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:27:38.853Z",
+      "details": "Household created: Suresh Kumar Maurya"
+    },
+    {
+      "id": "AUD-1791988058841-601",
+      "action": "OFFLINE_SYNC",
+      "entityType": "SYSTEM",
+      "entityId": "BATCH_SYNC",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:27:38.841Z",
+      "details": "Synced 1 visits, 0 referrals (skipped 0 duplicate visits, 0 duplicate referrals)"
+    },
+    {
+      "id": "AUD-1791988058831-772",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791988058811",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:27:38.831Z",
+      "details": "Event CONSULTED recorded"
+    },
+    {
+      "id": "AUD-1791988058825-734",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791988058811",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:27:38.825Z",
+      "details": "Event REACHED recorded"
+    },
+    {
+      "id": "AUD-1791988058812-692",
+      "action": "CREATE_REFERRAL",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791988058811",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:27:38.812Z",
+      "details": "Referral passport issued: ASHA20261010-5397"
+    },
+    {
+      "id": "AUD-1791988058798-453",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791988058797-255",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:27:38.798Z",
+      "details": "Visit recorded for Pooja Sharma"
+    },
+    {
+      "id": "AUD-1791988058772-189",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791988058771-10",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:27:38.772Z",
+      "details": "Visit recorded for Kamal Singh"
+    },
+    {
+      "id": "AUD-1791988058732-168",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:27:38.732Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791988058720-529",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-02",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:27:38.720Z",
+      "details": "User authenticated successfully with role HEALTH_FACILITY_OFFICER"
+    },
+    {
+      "id": "AUD-1791988058713-156",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:27:38.713Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791988058701-533",
+      "action": "FAILED_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:27:38.701Z",
+      "details": "Failed login attempt for sunita.devi@asha.gov.in"
+    },
+    {
+      "id": "AUD-1791988001968-171",
+      "action": "CREATE_PERSON",
+      "entityType": "PERSON",
+      "entityId": "P19",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:26:41.968Z",
+      "details": "Registered beneficiary Poonam Maurya"
+    },
+    {
+      "id": "AUD-1791988001960-418",
+      "action": "CREATE_HOUSEHOLD",
+      "entityType": "HOUSEHOLD",
+      "entityId": "HH-11",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:26:41.960Z",
+      "details": "Household created: Suresh Kumar Maurya"
+    },
+    {
+      "id": "AUD-1791988001949-318",
+      "action": "OFFLINE_SYNC",
+      "entityType": "SYSTEM",
+      "entityId": "BATCH_SYNC",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:26:41.949Z",
+      "details": "Synced 1 visits, 0 referrals (skipped 0 duplicate visits, 0 duplicate referrals)"
+    },
+    {
+      "id": "AUD-1791988001940-945",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791988001921",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:26:41.940Z",
+      "details": "Event CONSULTED recorded"
+    },
+    {
+      "id": "AUD-1791988001935-729",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791988001921",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:26:41.935Z",
+      "details": "Event REACHED recorded"
+    },
+    {
+      "id": "AUD-1791988001921-540",
+      "action": "CREATE_REFERRAL",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791988001921",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:26:41.921Z",
+      "details": "Referral passport issued: ASHA20261010-2176"
+    },
+    {
+      "id": "AUD-1791988001907-797",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791988001907-903",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:26:41.907Z",
+      "details": "Visit recorded for Pooja Sharma"
+    },
+    {
+      "id": "AUD-1791988001899-169",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791988001899-605",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:26:41.899Z",
+      "details": "Visit recorded for Kamal Singh"
+    },
+    {
+      "id": "AUD-1791988001843-378",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:26:41.843Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791988001831-462",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-02",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:26:41.831Z",
+      "details": "User authenticated successfully with role HEALTH_FACILITY_OFFICER"
+    },
+    {
+      "id": "AUD-1791988001825-570",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:26:41.825Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791988001813-101",
+      "action": "FAILED_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:26:41.813Z",
+      "details": "Failed login attempt for sunita.devi@asha.gov.in"
+    },
+    {
+      "id": "AUD-1791987937666-151",
+      "action": "CREATE_PERSON",
+      "entityType": "PERSON",
+      "entityId": "P19",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:37.666Z",
+      "details": "Registered beneficiary Poonam Maurya"
+    },
+    {
+      "id": "AUD-1791987937659-226",
+      "action": "CREATE_HOUSEHOLD",
+      "entityType": "HOUSEHOLD",
+      "entityId": "HH-11",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:37.659Z",
+      "details": "Household created: Suresh Kumar Maurya"
+    },
+    {
+      "id": "AUD-1791987937648-105",
+      "action": "OFFLINE_SYNC",
+      "entityType": "SYSTEM",
+      "entityId": "BATCH_SYNC",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:37.648Z",
+      "details": "Synced 1 visits, 0 referrals (skipped 0 duplicate visits, 0 duplicate referrals)"
+    },
+    {
+      "id": "AUD-1791987937639-504",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791987937620",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:25:37.639Z",
+      "details": "Event CONSULTED recorded"
+    },
+    {
+      "id": "AUD-1791987937633-772",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791987937620",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:25:37.633Z",
+      "details": "Event REACHED recorded"
+    },
+    {
+      "id": "AUD-1791987937621-0",
+      "action": "CREATE_REFERRAL",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791987937620",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:37.621Z",
+      "details": "Referral passport issued: ASHA20261010-6884"
+    },
+    {
+      "id": "AUD-1791987937604-37",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791987937604-340",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:37.604Z",
+      "details": "Visit recorded for Pooja Sharma"
+    },
+    {
+      "id": "AUD-1791987937591-97",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791987937585-363",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:37.591Z",
+      "details": "Visit recorded for Kamal Singh"
+    },
+    {
+      "id": "AUD-1791987937547-299",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:37.547Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791987937534-214",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-02",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:25:37.534Z",
+      "details": "User authenticated successfully with role HEALTH_FACILITY_OFFICER"
+    },
+    {
+      "id": "AUD-1791987937526-274",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:37.526Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791987937513-306",
+      "action": "FAILED_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:37.513Z",
+      "details": "Failed login attempt for sunita.devi@asha.gov.in"
+    },
+    {
+      "id": "AUD-1791987926398-831",
+      "action": "OFFLINE_SYNC",
+      "entityType": "SYSTEM",
+      "entityId": "BATCH_SYNC",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:26.398Z",
+      "details": "Synced 1 visits, 0 referrals (skipped 0 duplicate visits, 0 duplicate referrals)"
+    },
+    {
+      "id": "AUD-1791987926369-970",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791987926345",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:25:26.369Z",
+      "details": "Event CONSULTED recorded"
+    },
+    {
+      "id": "AUD-1791987926363-86",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791987926345",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:25:26.363Z",
+      "details": "Event REACHED recorded"
+    },
+    {
+      "id": "AUD-1791987926345-946",
+      "action": "CREATE_REFERRAL",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791987926345",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:26.345Z",
+      "details": "Referral passport issued: ASHA20261010-3618"
+    },
+    {
+      "id": "AUD-1791987926320-438",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791987926320-675",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:26.320Z",
+      "details": "Visit recorded for Pooja Sharma"
+    },
+    {
+      "id": "AUD-1791987926309-173",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791987926309-817",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:26.309Z",
+      "details": "Visit recorded for Kamal Singh"
+    },
+    {
+      "id": "AUD-1791987926269-825",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:26.269Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791987926258-6",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-02",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:25:26.258Z",
+      "details": "User authenticated successfully with role HEALTH_FACILITY_OFFICER"
+    },
+    {
+      "id": "AUD-1791987926251-410",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:26.251Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791987926238-907",
+      "action": "FAILED_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:25:26.238Z",
+      "details": "Failed login attempt for sunita.devi@asha.gov.in"
+    },
+    {
+      "id": "AUD-1791987087748-243",
+      "action": "OFFLINE_SYNC",
+      "entityType": "SYSTEM",
+      "entityId": "BATCH_SYNC",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:11:27.748Z",
+      "details": "Synced 1 visits, 0 referrals (skipped 0 duplicate visits, 0 duplicate referrals)"
+    },
+    {
+      "id": "AUD-1791987087739-851",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791987087718",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:11:27.739Z",
+      "details": "Event CONSULTED recorded"
+    },
+    {
+      "id": "AUD-1791987087733-239",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791987087718",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:11:27.733Z",
+      "details": "Event REACHED recorded"
+    },
+    {
+      "id": "AUD-1791987087719-988",
+      "action": "CREATE_REFERRAL",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791987087718",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:11:27.719Z",
+      "details": "Referral passport issued: ASHA20261010-6497"
+    },
+    {
+      "id": "AUD-1791987087712-42",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791987087712-300",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:11:27.712Z",
+      "details": "Visit recorded for Pooja Sharma"
+    },
+    {
+      "id": "AUD-1791987087701-502",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791987087701-289",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:11:27.701Z",
+      "details": "Visit recorded for Kamal Singh"
+    },
+    {
+      "id": "AUD-1791987087661-649",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:11:27.661Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791987087651-661",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-02",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T14:11:27.651Z",
+      "details": "User authenticated successfully with role HEALTH_FACILITY_OFFICER"
+    },
+    {
+      "id": "AUD-1791987087643-538",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:11:27.643Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791987087630-48",
+      "action": "FAILED_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:11:27.630Z",
+      "details": "Failed login attempt for sunita.devi@asha.gov.in"
+    }
+  ]
+}

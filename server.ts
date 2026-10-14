@@ -15,7 +15,8 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  // Dev server must always bind to port 3000 in AI Studio
+  const PORT = 3000;
 
   app.use(express.json());
 
@@ -67,15 +68,18 @@ async function startServer() {
     };
   }
 
-  // Health check
-  app.get('/api/v1/health', (req, res) => {
+  // Health check endpoints
+  const healthHandler = (req: express.Request, res: express.Response) => {
     res.json({
       status: 'healthy',
       app: 'ASHA-Saathi',
       version: '1.0.0-hackathon',
       timestamp: new Date().toISOString(),
     });
-  });
+  };
+  app.get('/health', healthHandler);
+  app.get('/api/health', healthHandler);
+  app.get('/api/v1/health', healthHandler);
 
   // Auth: Login with Genuine Credential Verification
   app.post('/api/v1/auth/login', (req, res) => {
@@ -251,11 +255,105 @@ async function startServer() {
   app.get('/api/v1/households/:id', (req, res) => {
     const hh = db.households.find((h) => h.id === req.params.id);
     if (!hh) {
-      return res.status(404).json({ error: 'Household not found' });
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Household not found' });
     }
     const members = db.people.filter((p) => p.householdId === hh.id);
     const visits = db.visits.filter((v) => v.householdId === hh.id);
-    res.json({ household: hh, members, visits });
+    res.json({ success: true, household: hh, members, visits });
+  });
+
+  // Households: Create
+  app.post('/api/v1/households', (req, res) => {
+    const {
+      headName,
+      tola = 'Pipra Tola',
+      village = 'Pipra',
+      familyMembersCount = 1,
+      rationCardType = 'BPL',
+      code,
+    } = req.body;
+
+    const cleanHeadName = typeof headName === 'string' ? headName.trim() : '';
+    if (!cleanHeadName) {
+      return res.status(400).json({
+        success: false,
+        error: 'VALIDATION_ERROR',
+        message: 'Household head name is required',
+      });
+    }
+
+    const nextIndex = db.households.length + 1;
+    const newId = `HH-${String(nextIndex).padStart(2, '0')}`;
+    const newCode = code || `HH-PIP-${String(nextIndex).padStart(3, '0')}`;
+
+    const newHh = {
+      id: newId,
+      code: newCode,
+      headName: cleanHeadName,
+      tola: String(tola).trim(),
+      village: String(village).trim(),
+      familyMembersCount: Number(familyMembersCount) || 1,
+      assignedWorkerId: (req as any).user?.id || 'USR-01',
+      rationCardType: rationCardType as any,
+      lastVisitDate: new Date().toISOString().slice(0, 10),
+    };
+
+    db.households.push(newHh);
+    db.logAudit('CREATE_HOUSEHOLD', 'HOUSEHOLD', newHh.id, (req as any).user?.id || 'USR-01', `Household created: ${newHh.headName}`);
+    db.persist();
+
+    res.status(201).json({
+      success: true,
+      household: newHh,
+      message: 'Household created successfully',
+    });
+  });
+
+  // Households: Update
+  app.put('/api/v1/households/:id', (req, res) => {
+    const hh = db.households.find((h) => h.id === req.params.id);
+    if (!hh) {
+      return res.status(404).json({
+        success: false,
+        error: 'NOT_FOUND',
+        message: 'Household not found',
+      });
+    }
+
+    const { headName, tola, village, familyMembersCount, rationCardType, lastVisitDate } = req.body;
+    if (headName !== undefined) hh.headName = String(headName).trim();
+    if (tola !== undefined) hh.tola = String(tola).trim();
+    if (village !== undefined) hh.village = String(village).trim();
+    if (familyMembersCount !== undefined) hh.familyMembersCount = Number(familyMembersCount) || hh.familyMembersCount;
+    if (rationCardType !== undefined) hh.rationCardType = rationCardType;
+    if (lastVisitDate !== undefined) hh.lastVisitDate = String(lastVisitDate).trim();
+
+    db.persist();
+    res.json({
+      success: true,
+      household: hh,
+      message: 'Household updated successfully',
+    });
+  });
+
+  // Households: Delete
+  app.delete('/api/v1/households/:id', (req, res) => {
+    const index = db.households.findIndex((h) => h.id === req.params.id);
+    if (index === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'NOT_FOUND',
+        message: 'Household not found',
+      });
+    }
+
+    const [deleted] = db.households.splice(index, 1);
+    db.persist();
+    res.json({
+      success: true,
+      household: deleted,
+      message: 'Household deleted successfully',
+    });
   });
 
   // People: List & Filter
@@ -284,6 +382,119 @@ async function startServer() {
     }
 
     res.json({ people, total: people.length });
+  });
+
+  // People: Get single beneficiary
+  app.get('/api/v1/people/:id', (req, res) => {
+    const person = db.people.find((p) => p.id === req.params.id);
+    if (!person) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Beneficiary not found' });
+    }
+    const household = db.households.find((h) => h.id === person.householdId) || null;
+    const visits = db.visits.filter((v) => v.personId === person.id);
+    const referrals = db.referrals.filter((r) => r.personId === person.id);
+    res.json({ success: true, person, household, visits, referrals });
+  });
+
+  // People: Create beneficiary
+  app.post('/api/v1/people', (req, res) => {
+    const {
+      name,
+      householdId = 'HH-01',
+      age = 25,
+      gender = 'Female',
+      relationshipToHead = 'Beneficiary',
+      category = 'General',
+      condition = 'Routine Checkup',
+      phone = '',
+      symptoms = [],
+      vitals = {},
+    } = req.body;
+
+    const cleanName = typeof name === 'string' ? name.trim() : '';
+    if (!cleanName) {
+      return res.status(400).json({
+        success: false,
+        error: 'VALIDATION_ERROR',
+        message: 'Beneficiary name is required',
+      });
+    }
+
+    const nextId = `P${String(db.people.length + 1).padStart(2, '0')}`;
+    const newPerson = {
+      id: nextId,
+      householdId: String(householdId).trim(),
+      name: cleanName,
+      age: Number(age) || 25,
+      gender: gender as any,
+      relationshipToHead: String(relationshipToHead).trim(),
+      category: category as any,
+      condition: String(condition).trim(),
+      phone: String(phone).trim(),
+      lastVisitDate: new Date().toISOString().slice(0, 10),
+      statusTag: 'Routine' as any,
+      symptoms: Array.isArray(symptoms) ? symptoms : [],
+      vitals: typeof vitals === 'object' && vitals !== null ? vitals : {},
+    };
+
+    db.people.push(newPerson);
+    db.logAudit('CREATE_PERSON', 'PERSON', newPerson.id, (req as any).user?.id || 'USR-01', `Registered beneficiary ${newPerson.name}`);
+    db.persist();
+
+    res.status(201).json({
+      success: true,
+      person: newPerson,
+      message: 'Beneficiary registered successfully',
+    });
+  });
+
+  // People: Update beneficiary
+  app.put('/api/v1/people/:id', (req, res) => {
+    const person = db.people.find((p) => p.id === req.params.id);
+    if (!person) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Beneficiary not found' });
+    }
+
+    const {
+      name,
+      age,
+      gender,
+      relationshipToHead,
+      category,
+      condition,
+      phone,
+      statusTag,
+      symptoms,
+      vitals,
+      lastVisitDate,
+    } = req.body;
+
+    if (name !== undefined) person.name = String(name).trim();
+    if (age !== undefined) person.age = Number(age) || person.age;
+    if (gender !== undefined) person.gender = gender;
+    if (relationshipToHead !== undefined) person.relationshipToHead = String(relationshipToHead).trim();
+    if (category !== undefined) person.category = category;
+    if (condition !== undefined) person.condition = String(condition).trim();
+    if (phone !== undefined) person.phone = String(phone).trim();
+    if (statusTag !== undefined) person.statusTag = statusTag;
+    if (symptoms !== undefined && Array.isArray(symptoms)) person.symptoms = symptoms;
+    if (vitals !== undefined && typeof vitals === 'object') person.vitals = vitals;
+    if (lastVisitDate !== undefined) person.lastVisitDate = String(lastVisitDate).trim();
+
+    db.persist();
+    res.json({ success: true, person, message: 'Beneficiary updated successfully' });
+  });
+
+  // People: Delete beneficiary
+  app.delete('/api/v1/people/:id', (req, res) => {
+    const index = db.people.findIndex((p) => p.id === req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Beneficiary not found' });
+    }
+
+    const [deleted] = db.people.splice(index, 1);
+    db.persist();
+    res.json({ success: true, person: deleted, message: 'Beneficiary removed successfully' });
   });
 
   // Visits: Create Visit with Input Validation & Rules Evaluation
@@ -384,6 +595,50 @@ async function startServer() {
   // Visits: List
   app.get('/api/v1/visits', (req, res) => {
     res.json({ visits: db.visits, total: db.visits.length });
+  });
+
+  // Visits: Get single visit
+  app.get('/api/v1/visits/:id', (req, res) => {
+    const visit = db.visits.find((v) => v.id === req.params.id);
+    if (!visit) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Visit not found' });
+    }
+    res.json({ success: true, visit });
+  });
+
+  // Visits: Update visit
+  app.put('/api/v1/visits/:id', (req, res) => {
+    const visit = db.visits.find((v) => v.id === req.params.id);
+    if (!visit) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Visit not found' });
+    }
+
+    const { condition, symptoms, vitals, notes, priorityLevel, followUpDate } = req.body;
+    if (condition !== undefined) visit.condition = String(condition).trim();
+    if (symptoms !== undefined) {
+      visit.symptoms = Array.isArray(symptoms)
+        ? symptoms.map((s) => String(s).trim()).filter(Boolean)
+        : [String(symptoms)];
+    }
+    if (vitals !== undefined && typeof vitals === 'object') visit.vitals = vitals;
+    if (notes !== undefined) visit.notes = String(notes).trim();
+    if (priorityLevel !== undefined) visit.priorityLevel = priorityLevel;
+    if (followUpDate !== undefined) visit.followUpDate = String(followUpDate).trim();
+
+    db.persist();
+    res.json({ success: true, visit, message: 'Visit record updated successfully' });
+  });
+
+  // Visits: Delete visit
+  app.delete('/api/v1/visits/:id', (req, res) => {
+    const index = db.visits.findIndex((v) => v.id === req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Visit not found' });
+    }
+
+    const [deleted] = db.visits.splice(index, 1);
+    db.persist();
+    res.json({ success: true, deleted, message: 'Visit deleted successfully' });
   });
 
   // AI Extraction Service
@@ -525,6 +780,17 @@ async function startServer() {
       return res.status(404).json({ success: false, error: 'REFERRAL_NOT_FOUND', message: 'Referral not found.' });
     }
     res.json({ success: true, referral: ref });
+  });
+
+  // Referrals: Delete referral
+  app.delete('/api/v1/referrals/:id', (req, res) => {
+    const index = db.referrals.findIndex((r) => r.id === req.params.id || r.referralCode === req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, error: 'REFERRAL_NOT_FOUND', message: 'Referral not found.' });
+    }
+    const [deleted] = db.referrals.splice(index, 1);
+    db.persist();
+    res.json({ success: true, deleted, message: 'Referral deleted successfully.' });
   });
 
   // Referrals: Validate Token (Health Centre Desk Scan)

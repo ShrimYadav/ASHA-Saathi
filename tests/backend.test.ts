@@ -1,4 +1,4 @@
-import { test, describe, before } from 'node:test';
+import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
 const BASE_URL = process.env.TEST_URL || 'http://127.0.0.1:3000/api/v1';
@@ -9,6 +9,10 @@ describe('ASHA-Saathi Backend Audit & Verification Suite', () => {
   let createdReferralId = '';
   let createdSecureToken = '';
   let createdReferralCode = '';
+  let createdVisitId1 = '';
+  let createdVisitId2 = '';
+  let createdHouseholdId = '';
+  let createdPersonId = '';
 
   before(async () => {
     // Ensure server is reachable
@@ -229,6 +233,7 @@ describe('ASHA-Saathi Backend Audit & Verification Suite', () => {
       assert.ok(data.disclaimer, 'Must include medical disclaimer');
       assert.ok(Array.isArray(data.clinicalEvaluation));
       assert.equal(data.clinicalEvaluation[0].ruleId, 'NTEP-TB-RULE-01');
+      createdVisitId1 = data.visit.id;
 
       // Verify patient in registry now has 'High Priority' tag
       const pRes = await fetch(`${BASE_URL}/people?search=Kamal`);
@@ -258,6 +263,27 @@ describe('ASHA-Saathi Backend Audit & Verification Suite', () => {
       const data = await res.json();
       assert.equal(data.success, true);
       assert.equal(data.visit.priorityLevel, 'ROUTINE');
+      createdVisitId2 = data.visit.id;
+    });
+
+    test('Retrieves single visit by ID and updates visit fields', async () => {
+      const getRes = await fetch(`${BASE_URL}/visits/${createdVisitId1}`);
+      assert.equal(getRes.status, 200);
+      const getData = await getRes.json();
+      assert.equal(getData.success, true);
+      assert.equal(getData.visit.id, createdVisitId1);
+
+      const putRes = await fetch(`${BASE_URL}/visits/${createdVisitId1}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notes: 'Updated clinical review note: patient counselled on sputum test.',
+        }),
+      });
+      assert.equal(putRes.status, 200);
+      const putData = await putRes.json();
+      assert.equal(putData.success, true);
+      assert.equal(putData.visit.notes, 'Updated clinical review note: patient counselled on sputum test.');
     });
   });
 
@@ -434,5 +460,101 @@ describe('ASHA-Saathi Backend Audit & Verification Suite', () => {
       assert.ok(Array.isArray(data.analytics.monthlyVisits));
       assert.ok(Array.isArray(data.analytics.demographics.categories));
     });
+  });
+
+  describe('7. Household & Beneficiary Management Lifecycle', () => {
+    test('Creates new household and updates details', async () => {
+      const res = await fetch(`${BASE_URL}/households`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${ashaToken}`,
+        },
+        body: JSON.stringify({
+          headName: 'Suresh Kumar Maurya',
+          tola: 'Pipra Tola',
+          village: 'Pipra',
+          familyMembersCount: 4,
+          rationCardType: 'BPL',
+        }),
+      });
+
+      assert.equal(res.status, 201);
+      const data = await res.json();
+      assert.equal(data.success, true);
+      assert.equal(data.household.headName, 'Suresh Kumar Maurya');
+      createdHouseholdId = data.household.id;
+
+      // Update household
+      const putRes = await fetch(`${BASE_URL}/households/${createdHouseholdId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ familyMembersCount: 5 }),
+      });
+      assert.equal(putRes.status, 200);
+      const putData = await putRes.json();
+      assert.equal(putData.household.familyMembersCount, 5);
+    });
+
+    test('Registers new beneficiary under household and updates record', async () => {
+      const res = await fetch(`${BASE_URL}/people`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${ashaToken}`,
+        },
+        body: JSON.stringify({
+          name: 'Poonam Maurya',
+          householdId: createdHouseholdId,
+          age: 23,
+          gender: 'Female',
+          relationshipToHead: 'Wife',
+          category: 'Pregnant',
+          condition: 'Pregnant (1st Trimester)',
+        }),
+      });
+
+      assert.equal(res.status, 201);
+      const data = await res.json();
+      assert.equal(data.success, true);
+      assert.equal(data.person.name, 'Poonam Maurya');
+      createdPersonId = data.person.id;
+
+      // Retrieve detail
+      const getRes = await fetch(`${BASE_URL}/people/${createdPersonId}`);
+      assert.equal(getRes.status, 200);
+      const getData = await getRes.json();
+      assert.equal(getData.success, true);
+      assert.equal(getData.person.id, createdPersonId);
+    });
+  });
+
+  after(async () => {
+    // Clean up test-created records to guarantee pristine data store without duplicates
+    if (createdVisitId1) {
+      await fetch(`${BASE_URL}/visits/${createdVisitId1}`, { method: 'DELETE' });
+    }
+    if (createdVisitId2) {
+      await fetch(`${BASE_URL}/visits/${createdVisitId2}`, { method: 'DELETE' });
+    }
+    if (createdReferralId) {
+      await fetch(`${BASE_URL}/referrals/${createdReferralId}`, { method: 'DELETE' });
+    }
+    if (createdPersonId) {
+      await fetch(`${BASE_URL}/people/${createdPersonId}`, { method: 'DELETE' });
+    }
+    if (createdHouseholdId) {
+      await fetch(`${BASE_URL}/households/${createdHouseholdId}`, { method: 'DELETE' });
+    }
+    // Clean any offline drafts created during sync tests
+    const vRes = await fetch(`${BASE_URL}/visits`);
+    if (vRes.ok) {
+      const vData = await vRes.json();
+      for (const v of vData.visits || []) {
+        if (v.personName?.startsWith('Offline Beneficiary')) {
+          await fetch(`${BASE_URL}/visits/${v.id}`, { method: 'DELETE' });
+        }
+      }
+    }
   });
 });

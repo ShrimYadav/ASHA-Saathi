@@ -100,12 +100,62 @@ export const api = {
     ),
   getHouseholdDetail: (id: string) =>
     request<{ household: any; members: any[]; visits: any[] }>(`/households/${id}`),
+  createHousehold: (payload: {
+    headName: string;
+    tola?: string;
+    village?: string;
+    familyMembersCount?: number;
+    rationCardType?: string;
+    code?: string;
+  }) =>
+    request<{ success: boolean; household: any; message: string }>('/households', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateHousehold: (id: string, payload: Record<string, any>) =>
+    request<{ success: boolean; household: any; message: string }>(`/households/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteHousehold: (id: string) =>
+    request<{ success: boolean; household: any; message: string }>(`/households/${id}`, {
+      method: 'DELETE',
+    }),
 
   // People
   getPeople: (category = 'All', search = '') =>
     request<{ people: any[]; total: number }>(
       `/people?category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}`
     ),
+  getPersonDetail: (id: string) =>
+    request<{ success: boolean; person: any; household: any; visits: any[]; referrals: any[] }>(
+      `/people/${id}`
+    ),
+  createPerson: (payload: {
+    name: string;
+    householdId?: string;
+    age?: number;
+    gender?: string;
+    relationshipToHead?: string;
+    category?: string;
+    condition?: string;
+    phone?: string;
+    symptoms?: string[];
+    vitals?: Record<string, any>;
+  }) =>
+    request<{ success: boolean; person: any; message: string }>('/people', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updatePerson: (id: string, payload: Record<string, any>) =>
+    request<{ success: boolean; person: any; message: string }>(`/people/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deletePerson: (id: string) =>
+    request<{ success: boolean; person: any; message: string }>(`/people/${id}`, {
+      method: 'DELETE',
+    }),
 
   // Visits
   createVisit: (payload: {
@@ -124,6 +174,20 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getVisits: () => request<{ visits: any[]; total: number }>('/visits'),
+  getVisitById: (id: string) => request<{ success: boolean; visit: any }>(`/visits/${id}`),
+  updateVisit: (id: string, payload: Record<string, any>) =>
+    request<{ success: boolean; visit: any; message: string }>(`/visits/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteVisit: (id: string) =>
+    request<{ success: boolean; deleted: any; message: string }>(`/visits/${id}`, {
+      method: 'DELETE',
+    }),
+  deleteReferral: (id: string) =>
+    request<{ success: boolean; deleted: any; message: string }>(`/referrals/${id}`, {
+      method: 'DELETE',
+    }),
 
   // AI Extraction
   extractVisitFromTranscript: (transcript: string, personContext?: any) =>

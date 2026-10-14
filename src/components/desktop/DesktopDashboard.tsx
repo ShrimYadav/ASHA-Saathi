@@ -108,6 +108,7 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
   const [homeCategoryFilter, setHomeCategoryFilter] = useState<'All' | 'Pregnant' | 'Children' | 'High Risk' | 'Households'>('All');
   const [selectedInspectPatient, setSelectedInspectPatient] = useState<any | null>(null);
   const [selectedInspectHousehold, setSelectedInspectHousehold] = useState<any | null>(null);
+  const [recordVisitPatient, setRecordVisitPatient] = useState<any | null>(null);
 
   // Time & Dynamic Live Clock State (Permanent Auto Clock)
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
@@ -523,15 +524,25 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
 
   const handleIssueReferral = async () => {
     try {
+      const p = selectedRiskPatient || patientsList.find((x) => x.name.includes('Kamal')) || patientsList[0];
+      const existingRef = referralsList.find(
+        (r) => r.personName?.toLowerCase() === p?.name?.toLowerCase() && r.status !== 'COMPLETED'
+      );
+      if (existingRef) {
+        setActivePassport(existingRef);
+        setShowRiskModal(false);
+        setShowPassportModal(true);
+        return;
+      }
       const res = await api.createReferral({
-        personId: 'P03',
-        personName: 'Kamal Singh',
-        personAge: 42,
-        personGender: 'Male',
-        householdId: 'HH-03',
+        personId: p.id || 'P05',
+        personName: p.name || 'Kamal Singh',
+        personAge: p.age || 42,
+        personGender: p.gender || 'Male',
+        householdId: p.householdId || 'HH-03',
         referredToFacility: 'District Hospital Pipra',
-        reason: 'Presumptive Pulmonary TB (Persistent cough > 2 weeks, night sweats)',
-        protocolCode: 'NTEP-TB-RULE-01',
+        reason: p.condition || 'Presumptive Pulmonary TB (Persistent cough > 2 weeks, night sweats)',
+        protocolCode: p.riskRuleId || 'NTEP-TB-RULE-01',
         urgency: 'HIGH_PRIORITY',
       });
       setActivePassport(res.referral);
@@ -1201,13 +1212,11 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">
                     Quick Household IDs:
                   </span>
-                  {[
-                    { id: 'HH-01', label: 'HH-01: Ramesh Sharma (Purwa)', head: 'Ramesh Sharma' },
-                    { id: 'HH-02', label: 'HH-02: Santosh Bai (Bishanpur)', head: 'Santosh Bai' },
-                    { id: 'HH-03', label: 'HH-03: Kamal Singh (TB Alert)', head: 'Kamal Singh' },
-                    { id: 'HH-04', label: 'HH-04: Manoj Verma (Kalyanpur)', head: 'Manoj Verma' },
-                    { id: 'HH-05', label: 'HH-05: Meena Patel (Pipra)', head: 'Meena Patel' },
-                  ].map((hh) => (
+                  {householdsList.slice(0, 5).map((h) => ({
+                    id: h.id,
+                    label: `${h.id}: ${h.headName.split(' ')[0]} (${h.tola})`,
+                    head: h.headName,
+                  })).map((hh) => (
                     <button
                       key={hh.id}
                       type="button"
@@ -1432,6 +1441,7 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                               <button
                                 type="button"
                                 onClick={() => {
+                                  setRecordVisitPatient(person);
                                   setTranscript(`विजिट: ${person.name} (${person.condition}) की स्वास्थ्य जांच।`);
                                   setShowVoiceModal(true);
                                 }}
@@ -1518,7 +1528,7 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                     Speak in Hindi/dialects, AI extracts structured fields, worker reviews before saving.
                   </p>
                   <span className="text-[10px] font-bold text-emerald-700 mt-2 inline-flex items-center gap-1 group-hover:underline">
-                    Test Record Visit &rarr;
+                    Record Visit &rarr;
                   </span>
                 </div>
 
@@ -1621,7 +1631,7 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                         <div
                           key={patient.id}
                           onClick={() => {
-                            if (patient.id === 'P03') {
+                            if (patient.statusTag === 'High Priority' || patient.name?.includes('Kamal') || patient.condition?.includes('TB')) {
                               setSelectedRiskPatient(patient);
                               setShowRiskModal(true);
                             } else {
@@ -1803,8 +1813,14 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
             </div>
 
             <PatientInteractionRecorder
+              allPatients={patientsList}
+              defaultPatient={recordVisitPatient}
+              initialTranscript={transcript}
               onVisitSaved={async (saved) => {
                 await loadData();
+                if (saved?.personName) {
+                  setVisitSuccessToast(`Visit recorded successfully for ${saved.personName}.`);
+                }
               }}
               onReferralIssued={async (ref) => {
                 setActivePassport(ref);
@@ -1825,6 +1841,7 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
             visits={visitsList}
             referrals={referralsList}
             onStartVisit={(person) => {
+              setRecordVisitPatient(person);
               setTranscript(`विजिट: ${person.name} (${person.condition}) की स्वास्थ्य जांच।`);
               setActiveNav('Voice Visit');
             }}
@@ -1920,16 +1937,16 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                   if (!matchQuery) return false;
 
                   if (householdCategoryFilter === 'Pregnant') {
-                    return h.headName.includes('Savita') || h.headName.includes('Radhika') || h.headName.includes('Sharma');
+                    return patientsList.some((p) => p.householdId === h.id && p.category === 'Pregnant');
                   }
                   if (householdCategoryFilter === 'Children') {
-                    return h.headName.includes('Kumar') || h.headName.includes('Yadav');
+                    return patientsList.some((p) => p.householdId === h.id && p.category === 'Children');
                   }
                   if (householdCategoryFilter === 'Presumptive TB') {
-                    return h.headName.includes('Kamal') || h.headName.includes('Singh');
+                    return patientsList.some((p) => p.householdId === h.id && (p.condition?.toLowerCase().includes('tb') || p.symptoms?.some((s: string) => String(s).toLowerCase().includes('cough'))));
                   }
                   if (householdCategoryFilter === 'High Priority') {
-                    return h.headName.includes('Kamal') || h.headName.includes('Savita');
+                    return patientsList.some((p) => p.householdId === h.id && (p.statusTag === 'High Priority' || p.category === 'High Risk'));
                   }
                   return true;
                 })
@@ -2372,11 +2389,17 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
               {/* Quick Test Tokens */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] text-slate-500 font-medium">Quick Test:</span>
-                {[
-                  { label: 'Kamal Singh (TB)', code: 'ASHA20261010-0042' },
-                  { label: 'Savita Sharma (ANC)', code: 'ASHA20261010-0089' },
-                  { label: 'Radhika Sharma', code: 'ASHA20261010-0015' },
-                ].map((item) => (
+                {(referralsList.length > 0
+                  ? referralsList.slice(0, 3).map((r) => ({
+                      label: `${r.personName} (${r.referralCode.slice(-4)})`,
+                      code: r.referralCode,
+                    }))
+                  : [
+                      { label: 'Kamal Singh (TB)', code: 'ASHA20261010-0042' },
+                      { label: 'Shabana Ansari (ANC)', code: 'ASHA20261010-0089' },
+                      { label: 'Meena Patel', code: 'ASHA20261010-0114' },
+                    ]
+                ).map((item) => (
                   <button
                     key={item.code}
                     onClick={() => {
@@ -2654,14 +2677,27 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
             <div className="max-w-4xl w-full my-8">
               <PatientInteractionRecorder
                 isModal={true}
-                onClose={() => setShowVoiceModal(false)}
-                onVisitSaved={async () => {
+                allPatients={patientsList}
+                defaultPatient={recordVisitPatient}
+                initialTranscript={transcript}
+                onClose={() => {
+                  setShowVoiceModal(false);
+                  setRecordVisitPatient(null);
+                }}
+                onVisitSaved={async (savedVisit) => {
                   await loadData();
-                  setTimeout(() => setShowVoiceModal(false), 1200);
+                  if (savedVisit?.personName) {
+                    setVisitSuccessToast(`Visit recorded successfully for ${savedVisit.personName}.`);
+                  }
+                  setTimeout(() => {
+                    setShowVoiceModal(false);
+                    setRecordVisitPatient(null);
+                  }, 1200);
                 }}
                 onReferralIssued={async (ref) => {
                   setActivePassport(ref);
                   setShowVoiceModal(false);
+                  setRecordVisitPatient(null);
                   setShowPassportModal(true);
                   await loadData();
                 }}
@@ -2701,13 +2737,18 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
               <div className="space-y-3 text-xs text-slate-700">
                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
                   <img
-                    src={ASSETS.kamalSingh}
-                    alt="Kamal Singh"
+                    src={
+                      selectedRiskPatient?.avatarUrl ||
+                      (selectedRiskPatient?.name?.includes('Kamal') ? ASSETS.kamalSingh : ASSETS.radhikaSharma)
+                    }
+                    alt={selectedRiskPatient?.name || 'Beneficiary'}
                     className="w-10 h-10 rounded-full object-cover ring-2 ring-rose-300"
                   />
                   <div>
-                    <h4 className="font-bold text-slate-900">Kamal Singh</h4>
-                    <p className="text-[11px] text-slate-500">Age: 42 | Male • Pipra Purwa</p>
+                    <h4 className="font-bold text-slate-900">{selectedRiskPatient?.name || 'Kamal Singh'}</h4>
+                    <p className="text-[11px] text-slate-500">
+                      Age: {selectedRiskPatient?.age || 42} | {selectedRiskPatient?.gender || 'Male'} • {selectedRiskPatient?.village || 'Pipra Purwa'}
+                    </p>
                   </div>
                 </div>
 
@@ -2989,9 +3030,10 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
               <div className="pt-2 flex gap-2">
                 <button
                   onClick={() => {
-                    const name = showPatientDetailModal.name;
+                    const p = showPatientDetailModal;
                     setShowPatientDetailModal(null);
-                    setTranscript(`विजिट: ${name} की स्वास्थ्य जांच।`);
+                    setRecordVisitPatient(p);
+                    setTranscript(`विजिट: ${p.name} की स्वास्थ्य जांच।`);
                     setShowVoiceModal(true);
                   }}
                   className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs transition-colors"
@@ -3145,6 +3187,7 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                   onClick={() => {
                     const p = selectedInspectPatient;
                     setSelectedInspectPatient(null);
+                    setRecordVisitPatient(p);
                     setTranscript(`विजिट: ${p.name} (${p.condition}) की स्वास्थ्य जांच।`);
                     setShowVoiceModal(true);
                   }}
