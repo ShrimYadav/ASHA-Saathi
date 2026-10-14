@@ -835,6 +835,348 @@
   ],
   "auditLogs": [
     {
+      "id": "AUD-1791991564560-794",
+      "action": "CREATE_PERSON",
+      "entityType": "PERSON",
+      "entityId": "P19",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:26:04.560Z",
+      "details": "Registered beneficiary Poonam Maurya"
+    },
+    {
+      "id": "AUD-1791991564547-383",
+      "action": "CREATE_HOUSEHOLD",
+      "entityType": "HOUSEHOLD",
+      "entityId": "HH-11",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:26:04.547Z",
+      "details": "Household created: Suresh Kumar Maurya"
+    },
+    {
+      "id": "AUD-1791991564534-78",
+      "action": "OFFLINE_SYNC",
+      "entityType": "SYSTEM",
+      "entityId": "BATCH_SYNC",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:26:04.534Z",
+      "details": "Synced 1 visits, 0 referrals (skipped 0 duplicate visits, 0 duplicate referrals)"
+    },
+    {
+      "id": "AUD-1791991564525-452",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791991564506",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T15:26:04.525Z",
+      "details": "Event CONSULTED recorded"
+    },
+    {
+      "id": "AUD-1791991564520-790",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791991564506",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T15:26:04.520Z",
+      "details": "Event REACHED recorded"
+    },
+    {
+      "id": "AUD-1791991564507-582",
+      "action": "CREATE_REFERRAL",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791991564506",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:26:04.507Z",
+      "details": "Referral passport issued: ASHA20261010-4177"
+    },
+    {
+      "id": "AUD-1791991564470-189",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791991564470-423",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:26:04.470Z",
+      "details": "Visit recorded for Pooja Sharma"
+    },
+    {
+      "id": "AUD-1791991564461-407",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791991564454-885",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:26:04.461Z",
+      "details": "Visit recorded for Kamal Singh"
+    },
+    {
+      "id": "AUD-1791991564412-47",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:26:04.412Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791991564400-2",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-02",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T15:26:04.400Z",
+      "details": "User authenticated successfully with role HEALTH_FACILITY_OFFICER"
+    },
+    {
+      "id": "AUD-1791991564393-540",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:26:04.393Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791991564381-795",
+      "action": "FAILED_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:26:04.381Z",
+      "details": "Failed login attempt for sunita.devi@asha.gov.in"
+    },
+    {
+      "id": "AUD-1791991014455-619",
+      "action": "CREATE_PERSON",
+      "entityType": "PERSON",
+      "entityId": "P19",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:16:54.455Z",
+      "details": "Registered beneficiary Poonam Maurya"
+    },
+    {
+      "id": "AUD-1791991014448-520",
+      "action": "CREATE_HOUSEHOLD",
+      "entityType": "HOUSEHOLD",
+      "entityId": "HH-11",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:16:54.448Z",
+      "details": "Household created: Suresh Kumar Maurya"
+    },
+    {
+      "id": "AUD-1791991014436-257",
+      "action": "OFFLINE_SYNC",
+      "entityType": "SYSTEM",
+      "entityId": "BATCH_SYNC",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:16:54.436Z",
+      "details": "Synced 1 visits, 0 referrals (skipped 0 duplicate visits, 0 duplicate referrals)"
+    },
+    {
+      "id": "AUD-1791991014424-888",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791991014405",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T15:16:54.424Z",
+      "details": "Event CONSULTED recorded"
+    },
+    {
+      "id": "AUD-1791991014419-48",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791991014405",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T15:16:54.419Z",
+      "details": "Event REACHED recorded"
+    },
+    {
+      "id": "AUD-1791991014406-526",
+      "action": "CREATE_REFERRAL",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791991014405",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:16:54.406Z",
+      "details": "Referral passport issued: ASHA20261010-4122"
+    },
+    {
+      "id": "AUD-1791991014375-515",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791991014375-348",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:16:54.375Z",
+      "details": "Visit recorded for Pooja Sharma"
+    },
+    {
+      "id": "AUD-1791991014364-707",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791991014364-327",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:16:54.364Z",
+      "details": "Visit recorded for Kamal Singh"
+    },
+    {
+      "id": "AUD-1791991014327-875",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:16:54.327Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791991014315-429",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-02",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T15:16:54.315Z",
+      "details": "User authenticated successfully with role HEALTH_FACILITY_OFFICER"
+    },
+    {
+      "id": "AUD-1791991014308-448",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:16:54.308Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791991014296-985",
+      "action": "FAILED_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:16:54.296Z",
+      "details": "Failed login attempt for sunita.devi@asha.gov.in"
+    },
+    {
+      "id": "AUD-1791990481910-488",
+      "action": "CREATE_PERSON",
+      "entityType": "PERSON",
+      "entityId": "P19",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:08:01.910Z",
+      "details": "Registered beneficiary Poonam Maurya"
+    },
+    {
+      "id": "AUD-1791990481901-848",
+      "action": "CREATE_HOUSEHOLD",
+      "entityType": "HOUSEHOLD",
+      "entityId": "HH-11",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:08:01.901Z",
+      "details": "Household created: Suresh Kumar Maurya"
+    },
+    {
+      "id": "AUD-1791990481876-495",
+      "action": "OFFLINE_SYNC",
+      "entityType": "SYSTEM",
+      "entityId": "BATCH_SYNC",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:08:01.876Z",
+      "details": "Synced 1 visits, 0 referrals (skipped 0 duplicate visits, 0 duplicate referrals)"
+    },
+    {
+      "id": "AUD-1791990481865-119",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791990481843",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T15:08:01.865Z",
+      "details": "Event CONSULTED recorded"
+    },
+    {
+      "id": "AUD-1791990481860-289",
+      "action": "RECORD_REFERRAL_EVENT",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791990481843",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T15:08:01.860Z",
+      "details": "Event REACHED recorded"
+    },
+    {
+      "id": "AUD-1791990481843-668",
+      "action": "CREATE_REFERRAL",
+      "entityType": "REFERRAL",
+      "entityId": "REF-1791990481843",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:08:01.843Z",
+      "details": "Referral passport issued: ASHA20261010-3825"
+    },
+    {
+      "id": "AUD-1791990481830-802",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791990481830-993",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:08:01.830Z",
+      "details": "Visit recorded for Pooja Sharma"
+    },
+    {
+      "id": "AUD-1791990481820-748",
+      "action": "CREATE_VISIT",
+      "entityType": "VISIT",
+      "entityId": "VIS-1791990481814-103",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:08:01.820Z",
+      "details": "Visit recorded for Kamal Singh"
+    },
+    {
+      "id": "AUD-1791990481768-381",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:08:01.768Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791990481758-329",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-02",
+      "userId": "USR-02",
+      "timestamp": "2026-10-14T15:08:01.758Z",
+      "details": "User authenticated successfully with role HEALTH_FACILITY_OFFICER"
+    },
+    {
+      "id": "AUD-1791990481751-962",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:08:01.751Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791990481739-280",
+      "action": "FAILED_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:08:01.739Z",
+      "details": "Failed login attempt for sunita.devi@asha.gov.in"
+    },
+    {
+      "id": "AUD-1791990072126-140",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T15:01:12.126Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
+      "id": "AUD-1791988233173-633",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "USR-01",
+      "userId": "USR-01",
+      "timestamp": "2026-10-14T14:30:33.173Z",
+      "details": "User authenticated successfully with role ASHA_WORKER"
+    },
+    {
       "id": "AUD-1791988058861-294",
       "action": "CREATE_PERSON",
       "entityType": "PERSON",

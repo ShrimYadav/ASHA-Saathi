@@ -285,13 +285,16 @@ export const PatientDirectory: React.FC<PatientDirectoryProps> = ({
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">
             Locate Household:
           </span>
-          {[
-            { id: 'HH-01', label: 'HH-01: Ramesh Sharma' },
-            { id: 'HH-02', label: 'HH-02: Santosh Bai' },
-            { id: 'HH-03', label: 'HH-03: Kamal Singh (TB)' },
-            { id: 'HH-04', label: 'HH-04: Manoj Verma' },
-            { id: 'HH-05', label: 'HH-05: Meena Patel' },
-          ].map((hh) => (
+          {(households.length > 0 ? households.slice(0, 5) : [
+            { id: 'HH-01', headName: 'Ramesh Sharma' },
+            { id: 'HH-02', headName: 'Dinanath Yadav' },
+            { id: 'HH-03', headName: 'Harishanker Singh' },
+            { id: 'HH-04', headName: 'Manoj Verma' },
+            { id: 'HH-05', headName: 'Ghanshyam Patel' },
+          ]).map((hh: any) => ({
+            id: hh.id,
+            label: `${hh.id}: ${hh.headName || hh.name || ''}`,
+          })).map((hh) => (
             <button
               key={hh.id}
               type="button"

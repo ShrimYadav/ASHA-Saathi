@@ -20,6 +20,7 @@ import {
   MessageSquare,
   ShieldAlert,
   X,
+  Menu,
   Sparkles,
   ArrowRight,
   UserCheck,
@@ -80,12 +81,14 @@ export const ALL_DIALECTS: { id: DialectOption; label: string; region: string }[
   { id: 'English', label: 'English', region: 'Reporting & Integration' },
 ];
 
-interface DesktopDashboardProps {
+export interface DesktopDashboardProps {
   className?: string;
   isCompact?: boolean;
   onOpenMobileScreen?: (screenId: string) => void;
   currentUser?: any;
   onLogout?: () => void;
+  activeNav?: string;
+  onNavigate?: (tab: string) => void;
 }
 
 export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
@@ -94,14 +97,32 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
   onOpenMobileScreen,
   currentUser: externalUser,
   onLogout,
+  activeNav: controlledActiveNav,
+  onNavigate: controlledOnNavigate,
 }) => {
   // Navigation: Always default to Home so user lands on greeting & dashboard
-  const [activeNav, setActiveNav] = useState('Home');
+  const [internalActiveNav, setInternalActiveNav] = useState('Home');
+  const activeNav = controlledActiveNav !== undefined ? controlledActiveNav : internalActiveNav;
+
+  const setActiveNav = (nav: string) => {
+    if (controlledOnNavigate) {
+      controlledOnNavigate(nav);
+    }
+    setInternalActiveNav(nav);
+  };
+
+  useEffect(() => {
+    if (controlledActiveNav) {
+      setInternalActiveNav(controlledActiveNav);
+    }
+  }, [controlledActiveNav]);
+
   const [offlineMode, setOfflineMode] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationsRead, setNotificationsRead] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [householdCategoryFilter, setHouseholdCategoryFilter] = useState<string>('All');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Searchable Patient & Household Directory State on Home Dashboard
   const [homeDirectoryQuery, setHomeDirectoryQuery] = useState('');
@@ -171,10 +192,90 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
   // Authentication State
   const [currentUser, setCurrentUser] = useState<any>(externalUser || CURRENT_USER);
 
+  // URL Tab Syncer & Deep Linking Engine
+  const resolveTabFromUrl = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab') || window.location.hash.replace(/^#\/?/, '');
+    if (!tabParam) return null;
+    const lower = tabParam.toLowerCase().trim();
+    const map: Record<string, string> = {
+      home: 'Home',
+      voice: 'Voice Visit',
+      'voice-visit': 'Voice Visit',
+      record: 'Voice Visit',
+      directory: 'Patient Directory',
+      patients: 'Patient Directory',
+      'patient-directory': 'Patient Directory',
+      beneficiaries: 'Patient Directory',
+      households: 'Households',
+      families: 'Households',
+      visits: 'Visit Records',
+      'visit-records': 'Visit Records',
+      priority: 'Priority Cases',
+      'priority-cases': 'Priority Cases',
+      alerts: 'Priority Cases',
+      referrals: 'Referrals',
+      'referral-tracking': 'Referrals',
+      passport: 'Referrals',
+      facility: 'Facility Desk',
+      desk: 'Facility Desk',
+      'facility-desk': 'Facility Desk',
+      hospital: 'Facility Desk',
+      analytics: 'Analytics',
+      reports: 'Analytics',
+      messages: 'Messages',
+      settings: 'Settings',
+    };
+    return map[lower] || null;
+  };
+
+  const navigateToTab = (tabName: string) => {
+    setActiveNav(tabName);
+    setMobileMenuOpen(false);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      const reverseMap: Record<string, string> = {
+        'Home': 'home',
+        'Voice Visit': 'voice',
+        'Patient Directory': 'directory',
+        'Households': 'households',
+        'Visit Records': 'visits',
+        'Priority Cases': 'priority',
+        'Referrals': 'referrals',
+        'Facility Desk': 'facility-desk',
+        'Analytics': 'analytics',
+        'Reports': 'analytics',
+        'Messages': 'messages',
+        'Settings': 'settings',
+      };
+      if (reverseMap[tabName]) {
+        url.searchParams.set('tab', reverseMap[tabName]);
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  };
+
+  useEffect(() => {
+    const initialTab = resolveTabFromUrl();
+    if (initialTab) {
+      setActiveNav(initialTab);
+    }
+    const handlePopState = () => {
+      const currentTab = resolveTabFromUrl();
+      if (currentTab) setActiveNav(currentTab);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   useEffect(() => {
     if (externalUser) {
       setCurrentUser(externalUser);
-      setActiveNav('Home');
+      const urlTab = resolveTabFromUrl();
+      if (urlTab) {
+        setActiveNav(urlTab);
+      }
     }
   }, [externalUser]);
 
@@ -522,11 +623,13 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
     }
   };
 
-  const handleIssueReferral = async () => {
+  const handleIssueReferral = async (targetPatient?: any) => {
     try {
-      const p = selectedRiskPatient || patientsList.find((x) => x.name.includes('Kamal')) || patientsList[0];
+      const p = targetPatient || selectedRiskPatient || patientsList[0];
+      if (!p) return;
+      const patientName = p.name || p.personName || 'Beneficiary';
       const existingRef = referralsList.find(
-        (r) => r.personName?.toLowerCase() === p?.name?.toLowerCase() && r.status !== 'COMPLETED'
+        (r) => r.personName?.toLowerCase() === patientName.toLowerCase() && r.status !== 'COMPLETED'
       );
       if (existingRef) {
         setActivePassport(existingRef);
@@ -535,15 +638,15 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
         return;
       }
       const res = await api.createReferral({
-        personId: p.id || 'P05',
-        personName: p.name || 'Kamal Singh',
-        personAge: p.age || 42,
-        personGender: p.gender || 'Male',
-        householdId: p.householdId || 'HH-03',
+        personId: p.id || 'P-' + Math.floor(Math.random() * 899 + 100),
+        personName: patientName,
+        personAge: p.age || 30,
+        personGender: p.gender || 'Female',
+        householdId: p.householdId || 'HH-01',
         referredToFacility: 'District Hospital Pipra',
-        reason: p.condition || 'Presumptive Pulmonary TB (Persistent cough > 2 weeks, night sweats)',
-        protocolCode: p.riskRuleId || 'NTEP-TB-RULE-01',
-        urgency: 'HIGH_PRIORITY',
+        reason: p.condition || 'Frontline clinical evaluation & protocol follow-up',
+        protocolCode: p.riskRuleId || 'MOHFW-PROTO-01',
+        urgency: p.urgency || 'HIGH_PRIORITY',
       });
       setActivePassport(res.referral);
       setShowRiskModal(false);
@@ -686,9 +789,9 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
       } ${className}`}
     >
       {/* ========================================== */}
-      {/* LEFT SIDEBAR (Dark Forest Green) */}
+      {/* DESKTOP SIDEBAR (Dark Forest Green - lg:flex) */}
       {/* ========================================== */}
-      <aside className="w-64 shrink-0 bg-[#064e3b] text-white flex flex-col justify-between p-5 select-none relative z-10">
+      <aside className="hidden lg:flex w-64 shrink-0 bg-[#064e3b] text-white flex-col justify-between p-5 select-none relative z-10">
         <div>
           {/* Brand Logo */}
           <div className="pb-6 pt-1 border-b border-white/10">
@@ -703,8 +806,8 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
               return (
                 <button
                   key={item.name}
-                  onClick={() => setActiveNav(item.name)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  onClick={() => navigateToTab(item.name)}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                     isActive
                       ? 'bg-[#0f5c43] text-white shadow-sm ring-1 ring-white/10'
                       : 'text-emerald-100/80 hover:bg-white/5 hover:text-white'
@@ -738,8 +841,8 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
         {/* User Profile Card at Bottom */}
         <div className="pt-4 border-t border-white/10 space-y-2">
           <button
-            onClick={() => setActiveNav('Settings')}
-            className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-white/5 transition-colors group text-left"
+            onClick={() => navigateToTab('Settings')}
+            className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-white/5 transition-colors group text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="relative shrink-0">
@@ -776,7 +879,7 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                 setShowLoginModal(true);
               }
             }}
-            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-100 text-[11px] font-semibold transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-100 text-[11px] font-semibold transition-colors cursor-pointer"
           >
             <KeyRound className="w-3.5 h-3.5 text-emerald-300" />
             <span>Switch Account / Sign In</span>
@@ -785,23 +888,154 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
       </aside>
 
       {/* ========================================== */}
+      {/* MOBILE DRAWER OVERLAY (Slide-out for mobile) */}
+      {/* ========================================== */}
+      {mobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-xs transition-opacity"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      <div
+        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-[#064e3b] text-white flex flex-col justify-between p-5 select-none shadow-2xl transition-transform duration-300 ease-in-out ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="overflow-y-auto">
+          {/* Brand Logo & Close Button */}
+          <div className="pb-4 pt-1 border-b border-white/10 flex items-center justify-between">
+            <AshaLogo variant="light" size="md" />
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-white/10 cursor-pointer"
+              title="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="mt-4 space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.name;
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => navigateToTab(item.name)}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-[#0f5c43] text-white shadow-sm ring-1 ring-white/10'
+                      : 'text-emerald-100/80 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      className={`w-4 h-4 ${
+                        isActive ? 'text-emerald-300' : 'text-emerald-300/70'
+                      }`}
+                    />
+                    <span>{item.name}</span>
+                  </div>
+                  {item.count && (
+                    <span
+                      className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${
+                        isActive
+                          ? 'bg-emerald-400/20 text-emerald-200'
+                          : 'bg-white/10 text-emerald-100'
+                      }`}
+                    >
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* User Profile Card at Bottom */}
+        <div className="pt-4 border-t border-white/10 space-y-2">
+          <button
+            onClick={() => navigateToTab('Settings')}
+            className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-white/5 transition-colors group text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative shrink-0">
+                <img
+                  src={currentUser.avatar || CURRENT_USER.avatar}
+                  alt={currentUser.name}
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-400/40"
+                />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#064e3b] rounded-full" />
+              </div>
+              <div className="truncate">
+                <p className="text-sm font-semibold text-white leading-tight truncate">
+                  {currentUser.name}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[11px] text-emerald-300/80 leading-none">
+                    {currentUser.role}
+                  </span>
+                  <span className="inline-flex items-center text-[10px] text-emerald-300 font-medium">
+                    <span className="w-1 h-1 rounded-full bg-emerald-400 mr-1" />
+                    Online
+                  </span>
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-emerald-300/50 group-hover:text-white transition-colors shrink-0" />
+          </button>
+
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              if (onLogout) {
+                onLogout();
+              } else {
+                setShowLoginModal(true);
+              }
+            }}
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-100 text-[11px] font-semibold transition-colors cursor-pointer"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-emerald-300" />
+            <span>Switch Account / Sign In</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================== */}
       {/* MAIN PROJECT WINDOW CONTENT AREA */}
       {/* ========================================== */}
-      <main className="flex-1 flex flex-col bg-[#f4f7f6] overflow-y-auto overflow-x-hidden relative">
+      <main className="flex-1 flex flex-col bg-[#f4f7f6] overflow-y-auto overflow-x-hidden relative pb-20 lg:pb-6">
         {/* Top Header Bar */}
-        <header className="px-8 py-5 bg-white/90 backdrop-blur-md sticky top-0 z-20 border-b border-slate-200/80 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                {greetingData.headline}
-              </h1>
-              <span className="text-xl">{greetingData.icon}</span>
+        <header className="px-4 py-3 sm:px-8 sm:py-5 bg-white/90 backdrop-blur-md sticky top-0 z-20 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            {/* Mobile Hamburger Menu Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="lg:hidden p-2 rounded-xl text-slate-700 hover:text-emerald-800 hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Open Navigation Menu"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight">
+                  {greetingData.headline}
+                </h1>
+                <span className="text-base sm:text-xl">{greetingData.icon}</span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">
+                {greetingData.isDoctor
+                  ? 'District Hospital OPD & Chest Clinic • Frontline Health Facility Desk'
+                  : 'Pipra Sub-Centre • Gorakhpur • Frontline Health Companion'}
+              </p>
             </div>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              {greetingData.isDoctor
-                ? 'District Hospital OPD & Chest Clinic • Frontline Health Facility Desk'
-                : 'Pipra Sub-Centre • Gorakhpur • Frontline Health Companion'}
-            </p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -2739,15 +2973,19 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                   <img
                     src={
                       selectedRiskPatient?.avatarUrl ||
-                      (selectedRiskPatient?.name?.includes('Kamal') ? ASSETS.kamalSingh : ASSETS.radhikaSharma)
+                      (selectedRiskPatient?.name?.toLowerCase().includes('kamal')
+                        ? ASSETS.kamalSingh
+                        : selectedRiskPatient?.name?.toLowerCase().includes('radhika')
+                        ? ASSETS.radhikaSharma
+                        : ASSETS.sunitaDevi)
                     }
                     alt={selectedRiskPatient?.name || 'Beneficiary'}
                     className="w-10 h-10 rounded-full object-cover ring-2 ring-rose-300"
                   />
                   <div>
-                    <h4 className="font-bold text-slate-900">{selectedRiskPatient?.name || 'Kamal Singh'}</h4>
+                    <h4 className="font-bold text-slate-900">{selectedRiskPatient?.name || 'High Priority Beneficiary'}</h4>
                     <p className="text-[11px] text-slate-500">
-                      Age: {selectedRiskPatient?.age || 42} | {selectedRiskPatient?.gender || 'Male'} • {selectedRiskPatient?.village || 'Pipra Purwa'}
+                      Age: {selectedRiskPatient?.age || 30} | {selectedRiskPatient?.gender || 'Beneficiary'} • {selectedRiskPatient?.village || selectedRiskPatient?.householdId || 'Pipra Sub-Centre'}
                     </p>
                   </div>
                 </div>
@@ -3389,6 +3627,86 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
           </div>
         )}
       </main>
+
+      {/* Tablet Bottom Navigation Bar (Visible on tablet screens 640px - 1024px) */}
+      <nav className="hidden sm:flex lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#064e3b] text-white border-t border-emerald-900/60 shadow-xl px-1 py-1 items-center justify-around select-none">
+        <button
+          type="button"
+          onClick={() => navigateToTab('Home')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer ${
+            activeNav === 'Home' ? 'text-emerald-300' : 'text-emerald-100/70 hover:text-white'
+          }`}
+        >
+          <Home className="w-4 h-4 mb-0.5" />
+          <span>Home</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigateToTab('Voice Visit')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer ${
+            activeNav === 'Voice Visit' ? 'text-emerald-300' : 'text-emerald-100/70 hover:text-white'
+          }`}
+        >
+          <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center -mt-2 shadow-md">
+            <Mic className="w-3.5 h-3.5 text-white" />
+          </div>
+          <span className="mt-0.5">Voice</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigateToTab('Patient Directory')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer ${
+            activeNav === 'Patient Directory' ? 'text-emerald-300' : 'text-emerald-100/70 hover:text-white'
+          }`}
+        >
+          <UserCheck className="w-4 h-4 mb-0.5" />
+          <span>Patients</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigateToTab('Households')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer ${
+            activeNav === 'Households' ? 'text-emerald-300' : 'text-emerald-100/70 hover:text-white'
+          }`}
+        >
+          <Users className="w-4 h-4 mb-0.5" />
+          <span>Families</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigateToTab('Referrals')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer ${
+            activeNav === 'Referrals' ? 'text-emerald-300' : 'text-emerald-100/70 hover:text-white'
+          }`}
+        >
+          <GitPullRequest className="w-4 h-4 mb-0.5" />
+          <span>Referral</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigateToTab('Facility Desk')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer ${
+            activeNav === 'Facility Desk' ? 'text-emerald-300' : 'text-emerald-100/70 hover:text-white'
+          }`}
+        >
+          <Building2 className="w-4 h-4 mb-0.5" />
+          <span>Desk</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(true)}
+          className="flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-semibold text-emerald-100/70 hover:text-white transition-colors cursor-pointer"
+        >
+          <Menu className="w-4 h-4 mb-0.5" />
+          <span>More</span>
+        </button>
+      </nav>
     </div>
   );
 };
